@@ -57,7 +57,8 @@ module RwxResults
 
       args =
         properties.map do |k, v|
-          next if v.nil? || v.empty?
+          next if v.nil? || v.to_s.empty?
+
           "#{k}=#{escape_property(v)}"
         end.compact
 
