@@ -66,15 +66,6 @@ RUN set -eux; \
 COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /app /app
 
-# Run and own only the runtime files as a non-root user for security
-RUN set -eux; \
-  \
-  useradd app --create-home --shell /bin/bash; \
-  mkdir /data; \
-  chown -R app:app /app /data
-
-USER app:app
-
 # Deployment options
 ENV LD_PRELOAD="libjemalloc.so.2" \
   MALLOC_CONF="dirty_decay_ms:1000,narenas:2,background_thread:true" \
