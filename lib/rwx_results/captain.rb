@@ -12,12 +12,12 @@ module RwxResults
 
       context.logger.notice(
         properties: {
-          title: "Foo"
+          file: "Dockerfile",
+          line: 70,
+          end_line: 76
         },
-        message: "Oops"
+        message: "That's right! No non-root users allowed!"
       )
-
-      context.logger.debug(message: "WHYYYY")
 
       # Fetch captain metadata
       # Generate markdown
