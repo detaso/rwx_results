@@ -1,0 +1,7 @@
+name: RWX Results
+author: ryansch
+description: A GitHub Action to show results from Captain and ABQ.
+
+runs:
+  using: docker
+  image: Dockerfile

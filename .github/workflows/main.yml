@@ -1,0 +1,19 @@
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test rwx_results
+    steps:
+      # To use this repository's private action,
+      # you must check out the repository
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run action
+        uses: ./ # Uses an action in the root directory
+        id: rwx_results
+        # with:
+        #   who-to-greet: 'Mona the Octocat'
+      # Use the output from the `hello` step
+      # - name: Get the output time
+      #   run: echo "The time was ${{ steps.hello.outputs.time }}"

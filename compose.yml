@@ -1,0 +1,11 @@
+services:
+  results:
+    build:
+      context: .
+    image: detaso/rwx-results:dev
+
+    environment:
+      GITHUB_TOKEN: asdf
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_EVENT_PATH: payload
+      RUNNER_DEBUG: "1"

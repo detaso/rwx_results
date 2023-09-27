@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require_relative "../lib/rwx_results/cli"
+
+RwxResults::CLI.start
