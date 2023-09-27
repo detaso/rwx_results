@@ -38,7 +38,7 @@ module RwxResults
         )
       else
         # Assume info
-        add_output message
+        puts message
       end
     end
 
@@ -46,6 +46,55 @@ module RwxResults
       define_method(level) do |message:|
         add_message(level:, message:)
       end
+    end
+
+    def start_group(title:)
+      issue_command(
+        command: :group,
+        message: title
+      )
+
+      if block_given?
+        begin
+          yield
+        ensure
+          end_group
+        end
+      end
+    end
+
+    def end_group
+      issue_command(
+        command: :endgroup
+      )
+    end
+
+    def add_mask(value:)
+      issue_command(
+        command: :add_mask,
+        message: value
+      )
+    end
+
+    def stop_commands(endtoken:)
+      issue_command(
+        command: :stop_commands,
+        message: endtoken
+      )
+
+      if block_given?
+        begin
+          yield
+        ensure
+          resume_commands(endtoken:)
+        end
+      end
+    end
+
+    def resume_commands(endtoken:)
+      issue_command(
+        command: endtoken
+      )
     end
 
     def debug?
@@ -69,12 +118,12 @@ module RwxResults
 
       cmd += "::#{escape_data(message)}"
 
-      add_output cmd
+      puts cmd
     end
 
     private
 
-    def add_output(str)
+    def add_output_param(name:, value:)
       if ENV.key?("GITHUB_OUTPUT")
         File.open(ENV["GITHUB_OUTPUT"], "a") do |f|
           f.puts str
