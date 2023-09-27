@@ -6,6 +6,17 @@ services:
 
     environment:
       GITHUB_TOKEN: asdf
-      GITHUB_EVENT_NAME: pull_request
       GITHUB_EVENT_PATH: payload
+      GITHUB_EVENT_NAME: push
+      GITHUB_SHA: d6c3680cda3c3fc75075049e62693dfe3d68c719
+      GITHUB_REF: refs/heads/add-captain-summary
+      GITHUB_WORKFLOW: .github/workflows/main.yml
+      GITHUB_ACTION: rwx_results
+      GITHUB_ACTOR: ryansch
+      GITHUB_JOB: test
+      GITHUB_RUN_NUMBER: "5"
+      GITHUB_RUN_ID: "6329236699"
       RUNNER_DEBUG: "1"
+
+    volumes:
+      - ./payload:/payload
