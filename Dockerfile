@@ -77,7 +77,8 @@ USER app:app
 
 # Deployment options
 ENV LD_PRELOAD="libjemalloc.so.2" \
-  MALLOC_CONF="dirty_decay_ms:1000,narenas:2,background_thread:true"
+  MALLOC_CONF="dirty_decay_ms:1000,narenas:2,background_thread:true" \
+  BUNDLE_GEMFILE=/app/Gemfile
 
 VOLUME /data
 
