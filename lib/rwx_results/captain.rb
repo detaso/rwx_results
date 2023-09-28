@@ -13,7 +13,8 @@ module RwxResults
 
     def call
       logger.start_group(title: "Captain Results") do
-        fetch_captain_summary
+        summary = fetch_captain_summary
+        generate_markdown(summary)
         # Generate markdown
         # add/create PR comment
       end
@@ -50,6 +51,56 @@ module RwxResults
       logger.debug "Response body: #{response.body}"
       summary = JSON.parse(response.body)
       logger.debug "Captain summary: #{summary.inspect}"
+
+      summary
+    end
+
+    def generate_markdown(summary)
+      logger.info "Generating markdown..."
+
+      markdown = []
+
+      status = summary.dig("summary", "status", "kind")
+      if status == "failed"
+        markdown << "### :x: Failed"
+      elsif status == "successful"
+        markdown << "### :white_check_mark: Successful"
+      end
+
+      types = {
+        retries: {
+          emoji: ":arrow_right_hook:",
+          human: "Retry"
+        },
+        failed: {
+          emoji: ":x:",
+          human: "Failed"
+        },
+        skipped: {
+          emoji: ":fast_forward:",
+          human: "Skipped"
+        },
+        # quarantined: {
+        #   emoji: "",
+        #   human: ""
+        # },
+        successful: {
+          emoji: ":white_check_mark:",
+          human: "Successful"
+        }
+      }
+
+      types.each do |k, v|
+        value = summary.dig("summary", k.to_s)
+        if value > 0
+          markdown << "#{emoji} #{retries} #{human}"
+        end
+      end
+
+      markdown.join("\n").tap do |text|
+        logger.debug "Markdown:"
+        logger.debug text
+      end
     end
 
     def branch_name
