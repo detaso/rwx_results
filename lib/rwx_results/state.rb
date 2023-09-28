@@ -14,12 +14,14 @@ module RwxResults
       return @octokit if defined?(@octokit)
 
       Octokit.configure do |c|
+        c.api_endpoint = run_context.api_url
+        c.web_endpoint = run_context.server_url
+        c.auto_paginate = true
       end
 
       @octokit =
         Octokit::Client.new(
-          access_token: ENV.fetch("GITHUB_TOKEN"),
-          auto_paginate: true
+          access_token: ENV.fetch("GITHUB_TOKEN")
         )
     end
 
