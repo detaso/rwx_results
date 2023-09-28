@@ -36,12 +36,15 @@ module RwxResults
           url,
           headers: {
             Accept: "application/json",
-            "Accept-Encoding": "gzip",
+            "Accept-Encoding": "gzip, deflate",
             Authorization: "Bearer #{ENV.fetch("RWX_ACCESS_TOKEN")}"
           },
           expects: [200],
           idempotent: true,
-          retry_errors: [Excon::Error::Timeout, Excon::Error::Server]
+          retry_errors: [Excon::Error::Timeout, Excon::Error::Server],
+          middlewares: Excon.defaults[:middlewares] + [
+            Excon::Middleware::Decompress
+          ]
         )
 
       logger.debug "Response body: #{response.body}"
