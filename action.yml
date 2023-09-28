@@ -7,14 +7,12 @@ inputs:
     description: The GitHub token used to create an authenticated client
     default: ${{ github.token }}
     required: false
-  debug:
-    description: Whether to tell the GitHub client to log details of its requests
-    default: false
 
 runs:
   using: docker
   image: Dockerfile
   env:
     GITHUB_TOKEN: ${{ inputs.github-token }}
+    RUNNER_DEBUG: "1"
   args:
     - captain
