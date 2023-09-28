@@ -10,8 +10,11 @@ jobs:
       - name: Run action
         uses: ./ # Uses an action in the root directory
         id: rwx_results
-        # with:
-        #   who-to-greet: 'Mona the Octocat'
+        with:
+          captain-test-suite-id: kairos-rspec
+          captain-branch-name: ar-authorization-edit
+          captain-commit-sha: c6579b74148621f07d14b2db051040bbe4ebfa62
+
       # Use the output from the `hello` step
       # - name: Get the output time
       #   run: echo "The time was ${{ steps.hello.outputs.time }}"

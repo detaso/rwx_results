@@ -43,8 +43,12 @@ module RwxResults
     end
 
     %i[debug info].each do |level|
-      define_method(level) do |message:|
-        add_message(level:, message:)
+      define_method(level) do |msg, message: nil|
+        if !msg.nil?
+          add_message(level:, message: msg)
+        else
+          add_message(level:, message:)
+        end
       end
     end
 
