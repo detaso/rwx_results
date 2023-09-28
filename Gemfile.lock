@@ -8,6 +8,7 @@ GEM
     debug (1.8.0)
       irb (>= 1.5.0)
       reline (>= 0.3.1)
+    excon (0.103.0)
     faraday (2.7.11)
       base64
       faraday-net_http (>= 2.0, < 3.1)
@@ -54,6 +55,7 @@ PLATFORMS
 
 DEPENDENCIES
   debug (~> 1.8)
+  excon (~> 0.103)
   faraday-multipart
   faraday-retry
   metaractor (~> 3.3)

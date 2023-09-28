@@ -24,7 +24,24 @@ module RwxResults
     def fetch_captain_metadata
       url =
         "https://captain.build/api/test_suite_summaries/#{context.test_suite_id}/#{branch_name}/#{commit_sha}"
-      logger.debug url
+
+      logger.debug "Captain results url: #{url}"
+
+      response =
+        Excon.get(
+          url,
+          headers: {
+            Accept: "application/json",
+            "Accept-Encoding": "gzip",
+            Authorization: "Bearer #{ENV.fetch("RWX_ACCESS_TOKEN")}"
+          },
+          expects: [200],
+          idempotent: true,
+          retry_errors: [Excon::Error::Timeout, Excon::Error::Server]
+        )
+
+      results = JSON.parse(response.body)
+      logger.debug "Captain results: #{results.inspect}"
     end
 
     def branch_name

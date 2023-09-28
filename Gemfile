@@ -17,6 +17,9 @@ gem "thor", "~> 1.2"
 # Adds parameter validation and error control to interactor
 gem "metaractor", "~> 3.3"
 
+# EXtended http(s) CONnections
+gem "excon", "~> 0.103"
+
 group :development do
   # Debugging functionality for Ruby. This is completely rewritten debug.rb which was contained by the ancient Ruby versions.
   gem "debug", "~> 1.8"

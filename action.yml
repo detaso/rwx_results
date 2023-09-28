@@ -7,6 +7,10 @@ inputs:
     description: The GitHub token used to create an authenticated client
     default: ${{ github.token }}
     required: false
+  rwx-access-token:
+    description: The RWX access token used to connect to the Captain API.
+    default: ${{ secrets.RWX_ACCESS_TOKEN }}
+    required: false
   captain-test-suite-id:
     description: The test suite identifier to target.
     required: true
@@ -22,6 +26,7 @@ runs:
   image: Dockerfile
   env:
     GITHUB_TOKEN: ${{ inputs.github-token }}
+    RWX_ACCESS_TOKEN: ${{ inputs.rwx-access-token }}
   args:
     - captain
     - "--test-suite-id=${{ inputs.captain-test-suite-id }}"
