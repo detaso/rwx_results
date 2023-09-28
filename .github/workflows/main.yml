@@ -11,6 +11,7 @@ jobs:
         uses: ./ # Uses an action in the root directory
         id: rwx_results
         with:
+          rwx-access-token: ${{ secrets.RWX_ACCESS_TOKEN }}
           captain-test-suite-id: kairos-rspec
           captain-branch-name: ar-authorization-edit
           captain-commit-sha: c6579b74148621f07d14b2db051040bbe4ebfa62

@@ -9,8 +9,7 @@ inputs:
     required: false
   rwx-access-token:
     description: The RWX access token used to connect to the Captain API.
-    default: ${{ secrets.RWX_ACCESS_TOKEN }}
-    required: false
+    required: true
   captain-test-suite-id:
     description: The test suite identifier to target.
     required: true
