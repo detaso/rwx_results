@@ -93,7 +93,7 @@ module RwxResults
       types.each do |k, v|
         value = summary.dig("summary", k.to_s)
         if value > 0
-          markdown << "#{emoji} #{retries} #{human}"
+          markdown << "#{v[:emoji]} #{value} #{v[:human]}"
         end
       end
 
