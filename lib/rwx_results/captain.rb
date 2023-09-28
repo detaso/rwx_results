@@ -1,11 +1,12 @@
-require "rwx_results/run_context"
+require "rwx_results/state"
 
 module RwxResults
   class Captain
     include Metaractor
+    include State::Delegator
     extend Forwardable
 
-    required :logger
+    required :state
     required :test_suite_id
 
     optional :branch_name
@@ -15,14 +16,13 @@ module RwxResults
       logger.start_group(title: "Captain Results") do
         summary = fetch_captain_summary
         generate_markdown(summary)
-        # Generate markdown
-        # add/create PR comment
+        manage_summary_comment
       end
     end
 
     private
 
-    delegate logger: :context
+    delegate state: :context
 
     def fetch_captain_summary
       logger.info "Fetching captain summary..."
@@ -97,10 +97,16 @@ module RwxResults
         end
       end
 
+      markdown << ""
+      markdown << "[Full results](#{summary["web_url"]})"
+
       markdown.join("\n").tap do |text|
-        logger.debug "Markdown:"
-        logger.debug text
+        logger.info "Markdown:"
+        logger.info text
       end
+    end
+
+    def manage_summary_comment
     end
 
     def branch_name
@@ -108,6 +114,8 @@ module RwxResults
         context.branch_name
       elsif %r{refs/heads/(?<branch>.*)} =~ run_context.ref
         branch
+      else
+        raise "No branch name found!"
       end
     end
 
@@ -117,13 +125,6 @@ module RwxResults
       else
         run_context.sha
       end
-    end
-
-    def run_context
-      return @run_context if defined?(@run_context)
-
-      @run_context =
-        RunContext.from_env
     end
   end
 end

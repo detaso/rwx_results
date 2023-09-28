@@ -1,19 +1,30 @@
 require "bundler/setup"
-Bundler.require(:default)
+
+if ENV.fetch("DEV", "false") == "true"
+  Bundler.require(:default, :development)
+  require "dotenv/load"
+else
+  Bundler.require(:default)
+end
 
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), "..")
 
 module RwxResults
   class CLI < Thor
+    class_option :debug,
+      type: :boolean
+
     option :test_suite_id, required: true
     option :branch_name
     option :commit_sha
     desc "captain", "Report captain results"
     def captain
+      init
+
       require "rwx_results/captain"
 
       Captain.call!(
-        logger:,
+        state:,
         **options
           .transform_keys(&:to_sym)
           .slice(:test_suite_id, :branch_name, :commit_sha)
@@ -23,6 +34,7 @@ module RwxResults
 
     desc "abq", "Report abq results"
     def abq
+      init
     end
 
     def self.exit_on_failure?
@@ -31,12 +43,22 @@ module RwxResults
 
     private
 
-    def logger
-      return @logger if defined?(@logger)
+    def init
+      handle_debug
+    end
 
-      require "rwx_results/logger"
-      @logger =
-        Logger.new
+    def handle_debug
+      if options[:debug]
+        ENV["RUNNER_DEBUG"] = "1"
+      end
+    end
+
+    def state
+      return @state if defined?(@state)
+
+      require "rwx_results/state"
+      @state =
+        State.new
     end
   end
 end
