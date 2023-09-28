@@ -12,9 +12,11 @@ module RwxResults
     optional :commit_sha
 
     def call
-      fetch_captain_summary
-      # Generate markdown
-      # add/create PR comment
+      logger.start_group(title: "Captain Results") do
+        fetch_captain_summary
+        # Generate markdown
+        # add/create PR comment
+      end
     end
 
     private
@@ -22,6 +24,8 @@ module RwxResults
     delegate logger: :context
 
     def fetch_captain_summary
+      logger.info "Fetching captain summary..."
+
       url =
         "https://captain.build/api/test_suite_summaries/#{context.test_suite_id}/#{branch_name}/#{commit_sha}"
 
@@ -40,6 +44,7 @@ module RwxResults
           retry_errors: [Excon::Error::Timeout, Excon::Error::Server]
         )
 
+      logger.debug "Response body: #{response.body}"
       summary = JSON.parse(response.body)
       logger.debug "Captain summary: #{summary.inspect}"
     end
