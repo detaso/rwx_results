@@ -11,6 +11,7 @@ module RwxResults
 
     optional :branch_name
     optional :commit_sha
+    optional :repository
 
     def call
       logger.start_group(title: "Captain Results") do
@@ -129,16 +130,16 @@ module RwxResults
     def manage_summary_comment(markdown)
       pulls =
         octokit.commit_pulls(
-          run_context.repo.to_s,
-          run_context.sha
+          repository,
+          commit_sha
         )
 
       logger.debug "Found #{pulls.size} pull requests"
 
       pulls.each do |pull|
-        logger.debug "Adding comment to #{run_context.repo.to_s}/pull/#{pull.id}"
+        logger.debug "Adding comment to #{repository}/pull/#{pull.id}"
         octokit.add_comment(
-          run_context.repo.to_s,
+          repository,
           pull.id,
           markdown
         )
@@ -160,6 +161,14 @@ module RwxResults
         context.commit_sha
       else
         run_context.sha
+      end
+    end
+
+    def repository
+      if context.has_key?(:repository)
+        context.repository
+      else
+        run_context.repo.to_s
       end
     end
   end

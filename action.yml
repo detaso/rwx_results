@@ -19,6 +19,9 @@ inputs:
   captain-commit-sha:
     description: The commit sha to target. Defaults to the pushed sha.
     required: false
+  captain-repository:
+    description: The github repository to target. Defaults to the pushed repository.
+    required: false
 
 runs:
   using: docker
@@ -31,3 +34,4 @@ runs:
     - "--test-suite-id=${{ inputs.captain-test-suite-id }}"
     - "--branch-name=${{ inputs.captain-branch-name }}"
     - "--commit-sha=${{ inputs.captain-commit-sha }}"
+    - "--repository=${{ inputs.captain-repository }}"

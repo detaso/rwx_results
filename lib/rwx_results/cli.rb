@@ -17,6 +17,7 @@ module RwxResults
     option :test_suite_id, required: true
     option :branch_name
     option :commit_sha
+    option :repository
     desc "captain", "Report captain results"
     def captain
       init
@@ -27,7 +28,7 @@ module RwxResults
         state:,
         **options
           .transform_keys(&:to_sym)
-          .slice(:test_suite_id, :branch_name, :commit_sha)
+          .slice(:test_suite_id, :branch_name, :commit_sha, :repository)
           .compact
       )
     end
