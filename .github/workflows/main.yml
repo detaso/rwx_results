@@ -13,8 +13,8 @@ jobs:
         with:
           rwx-access-token: ${{ secrets.RWX_ACCESS_TOKEN }}
           captain-test-suite-id: kairos-rspec
-          captain-branch-name: ar-authorization-edit
-          captain-commit-sha: c6579b74148621f07d14b2db051040bbe4ebfa62
+          captain-branch-name: captain-summary
+          captain-commit-sha: 59488939c9c61646c39813adc4fb1940462de4fb
           captain-repository: detaso/kairos
 
       # Use the output from the `hello` step
