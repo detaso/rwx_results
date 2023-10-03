@@ -1,5 +1,5 @@
 test-suites:
-  rwx_results:
+  rwx-results-rspec:
     command: bundle exec rspec --format json --out tmp/rspec.json --format progress
     results:
       path: tmp/rspec.json

@@ -7,6 +7,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - uses: rwx-research/setup-captain@v1
+
+      - run: captain run rwx-results-rspec
+        env:
+          RWX_ACCESS_TOKEN: ${{ secrets.RWX_ACCESS_TOKEN }}
+
       - name: Run action
         uses: ./ # Uses an action in the root directory
         id: rwx_results
