@@ -74,12 +74,11 @@ module RwxResults
       markdown << ""
       markdown << "[Full results](#{context.captain_summary["web_url"]})"
 
-      markdown.join("\n").tap do |text|
-        logger.info "Markdown:"
-        logger.info text
-      end
-
-      context.captain_markdown = markdown
+      context.captain_markdown =
+        markdown.join("\n").tap do |text|
+          logger.info "Markdown:"
+          logger.info text
+        end
     end
 
     private
