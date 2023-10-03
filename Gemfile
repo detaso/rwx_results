@@ -27,3 +27,8 @@ group :development do
   # Debugging functionality for Ruby. This is completely rewritten debug.rb which was contained by the ancient Ruby versions.
   gem "debug", "~> 1.8"
 end
+
+group :development, :test do
+  # BDD for Ruby
+  gem "rspec", "~> 3.12"
+end
