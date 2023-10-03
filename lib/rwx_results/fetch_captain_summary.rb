@@ -30,7 +30,13 @@ module RwxResults
           },
           expects: [200],
           idempotent: true,
-          retry_errors: [Excon::Error::Timeout, Excon::Error::Server],
+          retry_errors: [
+            Excon::Error::Timeout,
+            Excon::Error::Server,
+            Excon::Error::NoContent
+          ],
+          retry_interval: 5,
+          retry_limit: 10,
           middlewares: Excon.defaults[:middlewares] + [
             Excon::Middleware::Decompress
           ]
