@@ -12,10 +12,10 @@ jobs:
         id: rwx_results
         with:
           rwx-access-token: ${{ secrets.RWX_ACCESS_TOKEN }}
-          captain-test-suite-id: kairos-rspec
-          captain-branch-name: captain-summary
-          captain-commit-sha: 59488939c9c61646c39813adc4fb1940462de4fb
-          captain-repository: detaso/kairos
+          # captain-test-suite-id: kairos-rspec
+          # captain-branch-name: captain-summary
+          # captain-commit-sha: 59488939c9c61646c39813adc4fb1940462de4fb
+          # captain-repository: detaso/kairos
 
       # Use the output from the `hello` step
       # - name: Get the output time

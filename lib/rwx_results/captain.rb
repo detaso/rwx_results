@@ -137,10 +137,10 @@ module RwxResults
       logger.debug "Found #{pulls.size} pull requests"
 
       pulls.each do |pull|
-        logger.debug "Adding comment to #{repository}/pull/#{pull.id}"
+        logger.debug "Adding comment to #{repository}/pull/#{pull.number}"
         octokit.add_comment(
           repository,
-          pull.id,
+          pull.number,
           markdown
         )
       end
