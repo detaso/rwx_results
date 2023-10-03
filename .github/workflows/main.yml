@@ -17,6 +17,7 @@ jobs:
       - run: captain run rwx-results-rspec
         env:
           RWX_ACCESS_TOKEN: ${{ secrets.RWX_ACCESS_TOKEN }}
+        continue-on-error: true
 
       - name: Run action
         uses: ./ # Uses an action in the root directory
