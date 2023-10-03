@@ -15,8 +15,8 @@ module RwxResults
     def call
       logger.start_group(title: "Captain Results") do
         summary = fetch_captain_summary
-        generate_markdown(summary)
-        manage_summary_comment
+        markdown = generate_markdown(summary)
+        manage_summary_comment(markdown)
       end
     end
 
@@ -68,6 +68,10 @@ module RwxResults
       end
 
       types = {
+        flaky: {
+          emoji: ":arrows_counterclockwise:",
+          human: "Flaky"
+        },
         retries: {
           emoji: ":arrow_right_hook:",
           human: "Retry"
@@ -76,14 +80,30 @@ module RwxResults
           emoji: ":x:",
           human: "Failed"
         },
+        timedOut: {
+          emoji: ":stopwatch:",
+          human: "Timed Out"
+        },
+        quarantined: {
+          emoji: ":stethoscope:",
+          human: "Quarantined"
+        },
+        pended: {
+          emoji: ":hourglass:",
+          human: "Pended"
+        },
         skipped: {
           emoji: ":fast_forward:",
           human: "Skipped"
         },
-        # quarantined: {
-        #   emoji: "",
-        #   human: ""
-        # },
+        todo: {
+          emoji: ":clipboard:",
+          human: "Todo"
+        },
+        canceled: {
+          emoji: ":stop_button:",
+          human: "Canceled"
+        },
         successful: {
           emoji: ":white_check_mark:",
           human: "Successful"
@@ -106,7 +126,23 @@ module RwxResults
       end
     end
 
-    def manage_summary_comment
+    def manage_summary_comment(markdown)
+      pulls =
+        octokit.commit_pulls(
+          run_context.repo.to_s,
+          run_context.sha
+        )
+
+      logger.debug "Found #{pulls.size} pull requests"
+
+      pulls.each do |pull|
+        logger.debug "Adding comment to #{run_context.repo.to_s}/pull/#{pull.id}"
+        octokit.add_comment(
+          run_context.repo.to_s,
+          pull.id,
+          markdown
+        )
+      end
     end
 
     def branch_name

@@ -1,3 +1,5 @@
+require "rwx_results/types"
+
 module RwxResults
   RunContext =
     Data.define(
@@ -40,6 +42,20 @@ module RwxResults
         attributes[:graphql_url] = ENV.fetch("GITHUB_GRAPHQL_URL", "https://api.github.com/graphql")
 
         new(**attributes)
+      end
+
+      def issue
+        Issue.new(
+          number: (payload[:issue] || payload[:pull_request] || payload).number,
+          **repo
+        )
+      end
+
+      def repo
+        if ENV.has_key?("GITHUB_REPOSITORY")
+          owner, repo = ENV["GITHUB_REPOSITORY"].split("/")
+          Repo.new(owner:, repo:)
+        end
       end
     end
 end
