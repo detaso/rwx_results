@@ -23,12 +23,13 @@ gem "faraday-retry"
 # Thor is a toolkit for building powerful command-line interfaces.
 gem "thor", "~> 1.2"
 
-group :development do
+group :development, :test do
   # Debugging functionality for Ruby. This is completely rewritten debug.rb which was contained by the ancient Ruby versions.
   gem "debug", "~> 1.8"
-end
 
-group :development, :test do
   # BDD for Ruby
   gem "rspec", "~> 3.12"
+
+  # factory_bot provides a framework and DSL for defining and using factories - less error-prone, more explicit, and all-around easier to work with than fixtures.
+  gem "factory_bot", "~> 6.3"
 end

@@ -26,7 +26,7 @@ module RwxResults
           headers: {
             Accept: "application/json",
             "Accept-Encoding": "gzip, deflate",
-            Authorization: "Bearer #{ENV.fetch("RWX_ACCESS_TOKEN")}"
+            Authorization: "Bearer #{rwx_access_token}"
           },
           expects: [200],
           idempotent: true,
@@ -69,6 +69,10 @@ module RwxResults
       else
         run_context.sha
       end
+    end
+
+    def rwx_access_token
+      ENV.fetch("RWX_ACCESS_TOKEN")
     end
   end
 end
