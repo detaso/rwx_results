@@ -52,7 +52,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN set -eux; \
   \
-  apt-get update; \
+  apt-get update -qq; \
   apt-get install -y --no-install-recommends \
   curl \
   jq \
