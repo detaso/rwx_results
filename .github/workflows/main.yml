@@ -24,7 +24,7 @@ jobs:
         id: rwx_results
         with:
           rwx-access-token: ${{ secrets.RWX_ACCESS_TOKEN }}
-          captain-test-suite-id: test
+          captain-test-suite-id: rwx-results-rspec
           # captain-branch-name: captain-summary
           # captain-commit-sha: 59488939c9c61646c39813adc4fb1940462de4fb
           # captain-repository: detaso/kairos
