@@ -32,10 +32,11 @@ module RwxResults
           idempotent: true,
           retry_errors: [
             Excon::Error::Timeout,
+            Excon::Error::Socket,
             Excon::Error::Server,
             Excon::Error::NoContent
           ],
-          retry_interval: 5,
+          retry_interval:,
           retry_limit: 10,
           middlewares: Excon.defaults[:middlewares] + [
             Excon::Middleware::Decompress
@@ -43,7 +44,7 @@ module RwxResults
         )
 
       logger.debug "Response body: #{response.body}"
-      summary = JSON.parse(response.body)
+      summary = JSON.parse(response.body).transform_keys(&:to_sym)
       logger.debug "Captain summary: #{summary.inspect}"
 
       context.captain_summary = summary
@@ -73,6 +74,10 @@ module RwxResults
 
     def rwx_access_token
       ENV.fetch("RWX_ACCESS_TOKEN")
+    end
+
+    def retry_interval
+      5
     end
   end
 end

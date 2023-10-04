@@ -32,4 +32,7 @@ group :development, :test do
 
   # factory_bot provides a framework and DSL for defining and using factories - less error-prone, more explicit, and all-around easier to work with than fixtures.
   gem "factory_bot", "~> 6.3"
+
+  # WebMock allows stubbing HTTP requests and setting expectations on HTTP requests.
+  gem "webmock", "~> 3.19"
 end
