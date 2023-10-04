@@ -2,6 +2,36 @@ name: RWX Results
 author: ryansch
 description: A GitHub Action to show results from Captain and ABQ.
 
+inputs:
+  github-token:
+    description: The GitHub token used to create an authenticated client
+    default: ${{ github.token }}
+    required: false
+  rwx-access-token:
+    description: The RWX access token used to connect to the Captain API.
+    required: true
+  captain-test-suite-id:
+    description: The test suite identifier to target.
+    required: true
+  captain-branch-name:
+    description: The git branch to target. Defaults to the pushed branch.
+    required: false
+  captain-commit-sha:
+    description: The commit sha to target. Defaults to the pushed sha.
+    required: false
+  captain-repository:
+    description: The github repository to target. Defaults to the pushed repository.
+    required: false
+
 runs:
   using: docker
   image: Dockerfile
+  env:
+    GITHUB_TOKEN: ${{ inputs.github-token }}
+    RWX_ACCESS_TOKEN: ${{ inputs.rwx-access-token }}
+  args:
+    - captain
+    - "--test-suite-id=${{ inputs.captain-test-suite-id }}"
+    - "--branch-name=${{ inputs.captain-branch-name }}"
+    - "--commit-sha=${{ inputs.captain-commit-sha }}"
+    - "--repository=${{ inputs.captain-repository }}"

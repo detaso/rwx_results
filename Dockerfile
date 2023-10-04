@@ -52,7 +52,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN set -eux; \
   \
-  apt-get update; \
+  apt-get update -qq; \
   apt-get install -y --no-install-recommends \
   curl \
   jq \
@@ -65,15 +65,6 @@ RUN set -eux; \
 # Copy built artifacts: gems, application
 COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /app /app
-
-# Run and own only the runtime files as a non-root user for security
-RUN set -eux; \
-  \
-  useradd app --create-home --shell /bin/bash; \
-  mkdir /data; \
-  chown -R app:app /app /data
-
-USER app:app
 
 # Deployment options
 ENV LD_PRELOAD="libjemalloc.so.2" \
