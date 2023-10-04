@@ -59,7 +59,10 @@ module RwxResults
 
       require "rwx_results/state"
       @state =
-        State.new
+        State.new.tap do |s|
+          s.logger.debug "Run Context:"
+          s.logger.debug s.run_context
+        end
     end
   end
 end
