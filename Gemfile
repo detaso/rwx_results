@@ -33,6 +33,12 @@ group :development, :test do
   # factory_bot provides a framework and DSL for defining and using factories - less error-prone, more explicit, and all-around easier to work with than fixtures.
   gem "factory_bot", "~> 6.3"
 
+  # Ruby Style Guide, with linter & automatic code fixer
+  gem "standard", "~> 1.31.1"
+
+  # Pry is a runtime developer console and IRB alternative
+  gem "pry", "~> 0.14.2"
+
   # WebMock allows stubbing HTTP requests and setting expectations on HTTP requests.
   gem "webmock", "~> 3.19"
 end

@@ -2,6 +2,10 @@ require "rwx_results/run_context"
 
 module RwxResults
   class State
+    def initialize(run_context: nil)
+      @run_context = run_context
+    end
+
     def logger
       return @logger if defined?(@logger)
 
@@ -26,10 +30,7 @@ module RwxResults
     end
 
     def run_context
-      return @run_context if defined?(@run_context)
-
-      @run_context =
-        RunContext.from_env
+      @run_context ||= RunContext.from_env
     end
 
     module Delegator

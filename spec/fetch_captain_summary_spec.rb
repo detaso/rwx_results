@@ -53,7 +53,7 @@ RSpec.describe RwxResults::FetchCaptainSummary do
       end
     end
 
-    context "when fetching branch and sha from the run context" do
+    context "when fetching branch and sha from the state's run context" do
       let(:run_context) do
         FactoryBot.build(
           :run_context,
