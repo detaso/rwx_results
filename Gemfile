@@ -7,8 +7,8 @@ git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 # Loads environment variables from `.env`.
 gem "dotenv", "~> 2.8.1"
 
-# EXtended http(s) CONnections
-gem "excon", "~> 0.103"
+# A client library for making HTTP requests from Ruby.
+gem "httpx", "~> 1.0"
 
 # Adds parameter validation and error control to interactor
 gem "metaractor", "~> 3.3"

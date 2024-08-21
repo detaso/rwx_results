@@ -14,11 +14,13 @@ module RwxResults
 
       markdown = []
 
-      status = context.captain_summary.dig("summary", "status", "kind")
+      status = context.captain_summary.dig(:summary, :status, :kind)
       if status == "failed"
         markdown << "### :x: Failed"
       elsif status == "successful"
         markdown << "### :white_check_mark: Successful"
+      else
+        raise ArgumentError, "captain_summary does not contain status.kind"
       end
 
       types = {
@@ -65,14 +67,14 @@ module RwxResults
       }
 
       types.each do |k, v|
-        value = context.captain_summary.dig("summary", k.to_s)
+        value = context.captain_summary.dig(:summary, k)
         if value > 0
           markdown << "#{v[:emoji]} #{value} #{v[:human]}"
         end
       end
 
       markdown << ""
-      markdown << "[Full results](#{context.captain_summary["web_url"]})"
+      markdown << "[Full results](#{context.captain_summary[:web_url]})"
 
       context.captain_markdown =
         markdown.join("\n").tap do |text|

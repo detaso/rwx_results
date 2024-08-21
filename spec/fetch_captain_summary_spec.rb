@@ -2,8 +2,18 @@ require "rwx_results/fetch_captain_summary"
 require "rwx_results/state"
 
 RSpec.describe RwxResults::FetchCaptainSummary do
+  let(:run_context) do
+    FactoryBot.build(
+      :run_context,
+      branch_name:,
+      commit_sha:
+    )
+  end
+
   let(:state) do
-    RwxResults::State.new
+    RwxResults::State.new.tap do |s|
+      allow(s).to receive(:run_context) { run_context }
+    end
   end
 
   let(:test_suite_id) { "asdf" }
@@ -35,37 +45,14 @@ RSpec.describe RwxResults::FetchCaptainSummary do
         "https://captain.build/api/test_suite_summaries/#{test_suite_id}/#{branch_name}/#{commit_sha}"
       ).to_return(
         body: response_body,
-        status: 200
+        status: 200,
+        headers: {
+          "content-type": "application/json"
+        }
       )
     end
 
-    context "when passing branch and sha in directly" do
-      it "fetches the captain summary" do
-        action.run(
-          state: state,
-          test_suite_id: test_suite_id,
-          branch_name: branch_name,
-          commit_sha: commit_sha
-        )
-
-        expect(result).to be_success
-        expect(result.captain_summary).to eq response
-      end
-    end
-
     context "when fetching branch and sha from the run context" do
-      let(:run_context) do
-        FactoryBot.build(
-          :run_context,
-          ref: "refs/heads/#{branch_name}",
-          sha: commit_sha
-        )
-      end
-
-      before do
-        allow(state).to receive(:run_context) { run_context }
-      end
-
       it "fetches the captain summary" do
         action.run(
           state: state,
@@ -100,7 +87,7 @@ RSpec.describe RwxResults::FetchCaptainSummary do
   context "with a 500 error" do
     before do
       # Disable the normal delay between retries
-      allow(action).to receive(:retry_interval) { 0 }
+      allow(action).to receive(:retry_after) { 0.0001 }
 
       stub_request(
         :get,
@@ -111,7 +98,10 @@ RSpec.describe RwxResults::FetchCaptainSummary do
         },
         {
           body: response_body,
-          status: 200
+          status: 200,
+          headers: {
+            "content-type": "application/json"
+          }
         }
       )
     end

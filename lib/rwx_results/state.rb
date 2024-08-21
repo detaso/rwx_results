@@ -25,11 +25,15 @@ module RwxResults
         )
     end
 
+    def init_run_context(**)
+      @run_context =
+        RunContext.from_env(**)
+    end
+
     def run_context
       return @run_context if defined?(@run_context)
 
-      @run_context =
-        RunContext.from_env
+      init_run_context
     end
 
     module Delegator

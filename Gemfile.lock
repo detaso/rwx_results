@@ -17,7 +17,6 @@ GEM
       reline (>= 0.3.1)
     diff-lcs (1.5.0)
     dotenv (2.8.1)
-    excon (0.103.0)
     factory_bot (6.3.0)
       activesupport (>= 5.0.0)
     faraday (2.7.11)
@@ -30,6 +29,9 @@ GEM
     faraday-retry (2.2.0)
       faraday (~> 2.0)
     hashdiff (1.0.1)
+    http-2-next (1.0.1)
+    httpx (1.0.2)
+      http-2-next (>= 1.0.1)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
     interactor (3.1.2)
@@ -90,10 +92,10 @@ PLATFORMS
 DEPENDENCIES
   debug (~> 1.8)
   dotenv (~> 2.8.1)
-  excon (~> 0.103)
   factory_bot (~> 6.3)
   faraday-multipart
   faraday-retry
+  httpx (~> 1.0)
   metaractor (~> 3.3)
   octokit (~> 7.1)
   rspec (~> 3.12)

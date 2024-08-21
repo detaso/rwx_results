@@ -9,9 +9,6 @@ module RwxResults
     required :state
     required :test_suite_id
 
-    optional :branch_name
-    optional :commit_sha
-
     def call
       logger.info "Fetching captain summary..."
 
@@ -21,30 +18,24 @@ module RwxResults
       logger.debug "Captain results url: #{url}"
 
       response =
-        Excon.get(
+        http.get(
           url,
           headers: {
-            Accept: "application/json",
-            "Accept-Encoding": "gzip, deflate",
-            Authorization: "Bearer #{rwx_access_token}"
+            accept: "application/json",
+            authorization: "Bearer #{rwx_access_token}"
           },
-          expects: [200],
-          idempotent: true,
-          retry_errors: [
-            Excon::Error::Timeout,
-            Excon::Error::Socket,
-            Excon::Error::Server,
-            Excon::Error::NoContent
-          ],
-          retry_interval:,
-          retry_limit: 10,
-          middlewares: Excon.defaults[:middlewares] + [
-            Excon::Middleware::Decompress
-          ]
+
+          max_retries: 10,
+          retry_after:,
+          retry_on: ->(res) do
+            res in {status: 204} | {status: 500..599}
+          end
         )
 
+      response.raise_for_status
+
       logger.debug "Response body: #{response.body}"
-      summary = JSON.parse(response.body).transform_keys(&:to_sym)
+      summary = JSON.parse(response.body, symbolize_names: true)
       logger.debug "Captain summary: #{summary.inspect}"
 
       context.captain_summary = summary
@@ -55,9 +46,7 @@ module RwxResults
     delegate state: :context
 
     def branch_name
-      if context.has_key?(:branch_name)
-        context.branch_name
-      elsif %r{refs/heads/(?<branch>.*)} =~ run_context.ref
+      if %r{refs/heads/(?<branch>.*)} =~ run_context.ref
         branch
       else
         raise "No branch name found!"
@@ -65,19 +54,19 @@ module RwxResults
     end
 
     def commit_sha
-      if context.has_key?(:commit_sha)
-        context.commit_sha
-      else
-        run_context.sha
-      end
+      run_context.sha
     end
 
     def rwx_access_token
       ENV.fetch("RWX_ACCESS_TOKEN")
     end
 
-    def retry_interval
+    def retry_after
       5
+    end
+
+    def http
+      HTTPX.plugin(:retries).with(debug: $stderr, debug_level: 1)
     end
   end
 end

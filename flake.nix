@@ -27,13 +27,15 @@
           # https://devenv.sh/reference/options/
 
           packages = with pkgs; [
-            mktemp
             git
             libiconv
             libyaml
+            mktemp
             nodejs-18_x
-            postgresql_14
+            openssl
+            postgresql_16
             reattach-to-user-namespace
+            sqlite
             tmux
             tmuxPlugins.sensible
             tmuxPlugins.yank
@@ -47,7 +49,7 @@
           languages.ruby.enable = true;
           languages.ruby.bundler.enable = false;
           # languages.ruby.versionFile = ./.ruby-version;
-          languages.ruby.version = "3.2.2";
+          languages.ruby.version = "3.3.3";
 
           enterShell = ''
             export BUNDLE_BIN="$DEVENV_ROOT/.devenv/bin"

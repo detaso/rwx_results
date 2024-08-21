@@ -17,7 +17,7 @@ module RwxResults
       :server_url,
       :graphql_url
     ) do
-      def self.from_env
+      def self.from_env(**overrides)
         attributes = {}
 
         attributes[:payload] = {}
@@ -40,6 +40,15 @@ module RwxResults
         attributes[:api_url] = ENV.fetch("GITHUB_API_URL", "https://api.github.com")
         attributes[:server_url] = ENV.fetch("GITHUB_SERVER_URL", "https://github.com")
         attributes[:graphql_url] = ENV.fetch("GITHUB_GRAPHQL_URL", "https://api.github.com/graphql")
+
+        # overrides
+        if overrides[:branch_name]
+          attributes[:ref] = "refs/heads/#{overrides[:branch_name]}"
+        end
+
+        if overrides[:commit_sha]
+          attributes[:sha] = overrides[:commit_sha]
+        end
 
         new(**attributes)
       end

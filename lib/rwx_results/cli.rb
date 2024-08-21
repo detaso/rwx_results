@@ -26,10 +26,7 @@ module RwxResults
 
       Captain.call!(
         state:,
-        **options
-          .transform_keys(&:to_sym)
-          .slice(:test_suite_id, :branch_name, :commit_sha, :repository)
-          .compact
+        test_suite_id: options["test_suite_id"]
       )
     end
 
@@ -46,6 +43,12 @@ module RwxResults
 
     def init
       handle_debug
+      init_state(
+        **options
+          .transform_keys(&:to_sym)
+          .slice(:branch_name, :commit_sha, :repository)
+          .compact
+      )
     end
 
     def handle_debug
@@ -54,15 +57,21 @@ module RwxResults
       end
     end
 
-    def state
-      return @state if defined?(@state)
-
+    def init_state(**overrides)
       require "rwx_results/state"
       @state =
         State.new.tap do |s|
+          s.init_run_context(**overrides)
+
           s.logger.debug "Run Context:"
           s.logger.debug s.run_context
         end
+    end
+
+    def state
+      return @state if defined?(@state)
+
+      init_state
     end
   end
 end
