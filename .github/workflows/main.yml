@@ -5,15 +5,30 @@ jobs:
     runs-on: ubuntu-latest
     name: Test rwx_results
     steps:
-      # To use this repository's private action,
-      # you must check out the repository
       - name: Checkout
         uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - uses: rwx-research/setup-captain@v1
+
+      - run: captain run rwx-results-rspec
+        env:
+          RWX_ACCESS_TOKEN: ${{ secrets.RWX_ACCESS_TOKEN }}
+
       - name: Run action
         uses: ./ # Uses an action in the root directory
+        if: ${{ !cancelled() }}
         id: rwx_results
-        # with:
-        #   who-to-greet: 'Mona the Octocat'
+        with:
+          rwx-access-token: ${{ secrets.RWX_ACCESS_TOKEN }}
+          captain-test-suite-id: rwx-results-rspec
+          # captain-branch-name: captain-summary
+          # captain-commit-sha: 59488939c9c61646c39813adc4fb1940462de4fb
+          # captain-repository: detaso/kairos
+
       # Use the output from the `hello` step
       # - name: Get the output time
       #   run: echo "The time was ${{ steps.hello.outputs.time }}"
