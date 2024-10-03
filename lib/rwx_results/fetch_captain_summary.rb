@@ -25,7 +25,7 @@ module RwxResults
             authorization: "Bearer #{rwx_access_token}"
           },
 
-          max_retries: 10,
+          max_retries: 20,
           retry_after:,
           retry_on: ->(res) do
             res in {status: 204} | {status: 500..599}
@@ -33,6 +33,10 @@ module RwxResults
         )
 
       response.raise_for_status
+
+      if response.status == 204
+        raise "Captain results not found for test_suite_id: #{context.test_suite_id}, branch: #{branch_name}, commit_sha: #{commit_sha}"
+      end
 
       logger.debug "Response body: #{response.body}"
       summary = JSON.parse(response.body, symbolize_names: true)
