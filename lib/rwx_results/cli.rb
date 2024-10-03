@@ -66,6 +66,8 @@ module RwxResults
 
           s.logger.debug "Run Context:"
           s.logger.debug s.run_context
+          s.logger.debug s.run_context.branch_name
+          s.logger.debug s.run_context.commit_sha
         end
     end
 
