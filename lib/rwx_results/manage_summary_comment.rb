@@ -31,21 +31,6 @@ module RwxResults
     private
 
     delegate state: :context
-
-    def commit_sha
-      if context.has_key?(:commit_sha)
-        context.commit_sha
-      else
-        run_context.sha
-      end
-    end
-
-    def repository
-      if context.has_key?(:repository)
-        context.repository
-      else
-        run_context.repo.to_s
-      end
-    end
+    delegate [:commit_sha, :repository] => :run_context
   end
 end

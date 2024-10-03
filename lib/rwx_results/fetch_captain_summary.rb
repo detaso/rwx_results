@@ -48,6 +48,7 @@ module RwxResults
     private
 
     delegate state: :context
+    delegate commit_sha: :run_context
 
     def branch_name
       run_context.branch_name.tap do |branch_name|
@@ -55,10 +56,6 @@ module RwxResults
           raise "No branch name found!"
         end
       end
-    end
-
-    def commit_sha
-      run_context.sha
     end
 
     def rwx_access_token

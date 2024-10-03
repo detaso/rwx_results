@@ -16,7 +16,8 @@ module RwxResults
       :run_id,
       :api_url,
       :server_url,
-      :graphql_url
+      :graphql_url,
+      :overrides
     ) do
       def self.from_env(**overrides)
         attributes = {}
@@ -44,11 +45,15 @@ module RwxResults
         attributes[:graphql_url] = ENV.fetch("GITHUB_GRAPHQL_URL", "https://api.github.com/graphql")
 
         # overrides
+        attributes[:overrides] = {}
+
         if overrides[:branch_name]
+          attributes[:overrides][:branch_name] = overrides[:branch_name]
           attributes[:ref] = "refs/heads/#{overrides[:branch_name]}"
         end
 
         if overrides[:commit_sha]
+          attributes[:overrides][:commit_sha] = overrides[:commit_sha]
           attributes[:sha] = overrides[:commit_sha]
         end
 
@@ -70,11 +75,24 @@ module RwxResults
       end
 
       def branch_name
-        if event_name == "pull_request" ||
+        if overrides.key?(:branch_name)
+          overrides[:branch_name]
+        elsif event_name == "pull_request" ||
             event_name == "pull_request_target"
           head_ref
         elsif %r{refs/heads/(?<branch>.*)} =~ ref
           branch
+        end
+      end
+
+      def commit_sha
+        if overrides.key?(:commit_sha)
+          overrides[:commit_sha]
+        elsif event_name == "pull_request" ||
+            event_name == "pull_request_target"
+          payload.dig(:pull_request, :head, :sha)
+        else
+          sha
         end
       end
     end

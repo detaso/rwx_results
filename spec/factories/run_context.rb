@@ -21,6 +21,7 @@ FactoryBot.define do
     api_url { "https://api.github.com" }
     server_url { "https://github.com" }
     graphql_url { "https://api.github.com/graphql" }
+    overrides { {} }
 
     initialize_with { new(**attributes) }
   end
