@@ -13,7 +13,7 @@ module RwxResults
       logger.info "Fetching captain summary..."
 
       url =
-        "https://captain.build/api/test_suite_summaries/#{context.test_suite_id}/#{branch_name}/#{commit_sha}"
+        "https://cloud.rwx.com/api/test_suite_summaries/#{context.test_suite_id}/#{branch_name}/#{commit_sha}"
 
       logger.debug "Captain results url: #{url}"
 
