@@ -11,7 +11,7 @@ FactoryBot.define do
     event_name { "push" }
     sha { commit_sha }
     ref { "refs/heads/#{branch_name}" }
-    base_ref { nil }
+    head_ref { nil }
     workflow { ".github/workflows/main.yml" }
     action { "rwx_results" }
     actor { "ryansch" }
