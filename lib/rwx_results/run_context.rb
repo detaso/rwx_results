@@ -7,6 +7,7 @@ module RwxResults
       :event_name,
       :sha,
       :ref,
+      :base_ref,
       :workflow,
       :action,
       :actor,
@@ -31,6 +32,7 @@ module RwxResults
         attributes[:event_name] = ENV["GITHUB_EVENT_NAME"]
         attributes[:sha] = ENV["GITHUB_SHA"]
         attributes[:ref] = ENV["GITHUB_REF"]
+        attributes[:base_ref] = ENV["GITHUB_BASE_REF"]
         attributes[:workflow] = ENV["GITHUB_WORKFLOW"]
         attributes[:action] = ENV["GITHUB_ACTION"]
         attributes[:actor] = ENV["GITHUB_ACTOR"]
@@ -64,6 +66,14 @@ module RwxResults
         if ENV.has_key?("GITHUB_REPOSITORY")
           owner, repo = ENV["GITHUB_REPOSITORY"].split("/")
           Repo.new(owner:, repo:)
+        end
+      end
+
+      def branch_name
+        if event_name == "pull_request"
+          base_ref
+        elsif %r{refs/heads/(?<branch>.*)} =~ ref
+          branch
         end
       end
     end

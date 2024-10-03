@@ -50,10 +50,10 @@ module RwxResults
     delegate state: :context
 
     def branch_name
-      if %r{refs/heads/(?<branch>.*)} =~ run_context.ref
-        branch
-      else
-        raise "No branch name found!"
+      run_context.branch_name.tap do |branch_name|
+        if branch_name.nil?
+          raise "No branch name found!"
+        end
       end
     end
 
