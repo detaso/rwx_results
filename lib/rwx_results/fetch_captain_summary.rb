@@ -72,7 +72,7 @@ module RwxResults
     end
 
     def http
-      HTTPX.plugin(:retries).with(debug: $stderr, debug_level: 1)
+      HTTPX.plugin(:retries)
     end
   end
 end
