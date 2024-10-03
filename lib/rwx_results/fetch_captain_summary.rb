@@ -25,7 +25,7 @@ module RwxResults
             authorization: "Bearer #{rwx_access_token}"
           },
 
-          max_retries: 20,
+          max_retries: 10,
           retry_after:,
           retry_on: ->(res) do
             res in {status: 204} | {status: 500..599}
