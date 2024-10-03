@@ -26,7 +26,7 @@ module RwxResults
         if ENV.key?("GITHUB_EVENT_PATH")
           if File.exist?(ENV["GITHUB_EVENT_PATH"])
             attributes[:payload] =
-              JSON.load_file(ENV["GITHUB_EVENT_PATH"])
+              JSON.load_file(ENV["GITHUB_EVENT_PATH"], symbolize_names: true)
           end
         end
 
