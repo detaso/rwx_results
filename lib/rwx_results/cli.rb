@@ -48,6 +48,7 @@ module RwxResults
           .transform_keys(&:to_sym)
           .slice(:branch_name, :commit_sha, :repository)
           .compact
+          .select { |_k, v| v != "" }
       )
     end
 
@@ -65,6 +66,8 @@ module RwxResults
 
           s.logger.debug "Run Context:"
           s.logger.debug s.run_context
+          s.logger.debug s.run_context.branch_name
+          s.logger.debug s.run_context.commit_sha
         end
     end
 

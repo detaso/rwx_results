@@ -19,33 +19,42 @@ module RwxResults
       logger.debug "Found #{pulls.size} pull requests"
 
       pulls.each do |pull|
-        logger.debug "Adding comment to #{repository}/pull/#{pull.number}"
-        octokit.add_comment(
-          repository,
-          pull.number,
-          context.captain_markdown
-        )
+        comments =
+          octokit.issue_comments(
+            repository,
+            pull.number
+          )
+
+        bot_comment =
+          comments.find do |comment|
+            comment.user.type == "Bot" && comment.body.include?("cloud.rwx.com")
+          end
+
+        if bot_comment
+          logger.debug "Updating comment on #{repository}/pull/#{pull.number}"
+          octokit.update_comment(
+            repository,
+            bot_comment.id,
+            context.captain_markdown
+          )
+        else
+          logger.debug "Adding comment to #{repository}/pull/#{pull.number}"
+          octokit.add_comment(
+            repository,
+            pull.number,
+            context.captain_markdown
+          )
+        end
       end
     end
 
     private
 
     delegate state: :context
-
-    def commit_sha
-      if context.has_key?(:commit_sha)
-        context.commit_sha
-      else
-        run_context.sha
-      end
-    end
+    delegate commit_sha: :run_context
 
     def repository
-      if context.has_key?(:repository)
-        context.repository
-      else
-        run_context.repo.to_s
-      end
+      run_context.repo.to_s
     end
   end
 end

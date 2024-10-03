@@ -11,6 +11,7 @@ FactoryBot.define do
     event_name { "push" }
     sha { commit_sha }
     ref { "refs/heads/#{branch_name}" }
+    head_ref { nil }
     workflow { ".github/workflows/main.yml" }
     action { "rwx_results" }
     actor { "ryansch" }
@@ -20,6 +21,7 @@ FactoryBot.define do
     api_url { "https://api.github.com" }
     server_url { "https://github.com" }
     graphql_url { "https://api.github.com/graphql" }
+    overrides { {} }
 
     initialize_with { new(**attributes) }
   end

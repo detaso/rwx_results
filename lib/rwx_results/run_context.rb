@@ -7,6 +7,7 @@ module RwxResults
       :event_name,
       :sha,
       :ref,
+      :head_ref,
       :workflow,
       :action,
       :actor,
@@ -15,7 +16,8 @@ module RwxResults
       :run_id,
       :api_url,
       :server_url,
-      :graphql_url
+      :graphql_url,
+      :overrides
     ) do
       def self.from_env(**overrides)
         attributes = {}
@@ -24,13 +26,14 @@ module RwxResults
         if ENV.key?("GITHUB_EVENT_PATH")
           if File.exist?(ENV["GITHUB_EVENT_PATH"])
             attributes[:payload] =
-              JSON.load_file(ENV["GITHUB_EVENT_PATH"])
+              JSON.load_file(ENV["GITHUB_EVENT_PATH"], symbolize_names: true)
           end
         end
 
         attributes[:event_name] = ENV["GITHUB_EVENT_NAME"]
         attributes[:sha] = ENV["GITHUB_SHA"]
         attributes[:ref] = ENV["GITHUB_REF"]
+        attributes[:head_ref] = ENV["GITHUB_HEAD_REF"]
         attributes[:workflow] = ENV["GITHUB_WORKFLOW"]
         attributes[:action] = ENV["GITHUB_ACTION"]
         attributes[:actor] = ENV["GITHUB_ACTOR"]
@@ -42,11 +45,15 @@ module RwxResults
         attributes[:graphql_url] = ENV.fetch("GITHUB_GRAPHQL_URL", "https://api.github.com/graphql")
 
         # overrides
+        attributes[:overrides] = {}
+
         if overrides[:branch_name]
+          attributes[:overrides][:branch_name] = overrides[:branch_name]
           attributes[:ref] = "refs/heads/#{overrides[:branch_name]}"
         end
 
         if overrides[:commit_sha]
+          attributes[:overrides][:commit_sha] = overrides[:commit_sha]
           attributes[:sha] = overrides[:commit_sha]
         end
 
@@ -64,6 +71,31 @@ module RwxResults
         if ENV.has_key?("GITHUB_REPOSITORY")
           owner, repo = ENV["GITHUB_REPOSITORY"].split("/")
           Repo.new(owner:, repo:)
+        end
+      end
+
+      def pr?
+        event_name == "pull_request" ||
+          event_name == "pull_request_target"
+      end
+
+      def branch_name
+        if overrides.key?(:branch_name)
+          overrides[:branch_name]
+        elsif pr?
+          head_ref
+        elsif %r{refs/heads/(?<branch>.*)} =~ ref
+          branch
+        end
+      end
+
+      def commit_sha
+        if overrides.key?(:commit_sha)
+          overrides[:commit_sha]
+        elsif pr?
+          payload.dig(:pull_request, :head, :sha)
+        else
+          sha
         end
       end
     end

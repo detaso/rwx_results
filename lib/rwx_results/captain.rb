@@ -12,10 +12,6 @@ module RwxResults
     required :state
     required :test_suite_id
 
-    optional :branch_name
-    optional :commit_sha
-    optional :repository
-
     organize [
       FetchCaptainSummary,
       GenerateCaptainMarkdown,
