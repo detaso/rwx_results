@@ -74,11 +74,15 @@ module RwxResults
         end
       end
 
+      def pr?
+        event_name == "pull_request" ||
+          event_name == "pull_request_target"
+      end
+
       def branch_name
         if overrides.key?(:branch_name)
           overrides[:branch_name]
-        elsif event_name == "pull_request" ||
-            event_name == "pull_request_target"
+        elsif pr?
           head_ref
         elsif %r{refs/heads/(?<branch>.*)} =~ ref
           branch
@@ -88,8 +92,7 @@ module RwxResults
       def commit_sha
         if overrides.key?(:commit_sha)
           overrides[:commit_sha]
-        elsif event_name == "pull_request" ||
-            event_name == "pull_request_target"
+        elsif pr?
           payload.dig(:pull_request, :head, :sha)
         else
           sha

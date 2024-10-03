@@ -42,7 +42,7 @@ RSpec.describe RwxResults::FetchCaptainSummary do
     before do
       stub_request(
         :get,
-        "https://cloud.rwx.com/api/test_suite_summaries/#{test_suite_id}/#{branch_name}/#{commit_sha}"
+        "https://cloud.rwx.com/captain/api/test_suite_summaries/#{test_suite_id}/#{branch_name}/#{commit_sha}"
       ).to_return(
         body: response_body,
         status: 200,
@@ -91,7 +91,7 @@ RSpec.describe RwxResults::FetchCaptainSummary do
 
       stub_request(
         :get,
-        "https://cloud.rwx.com/api/test_suite_summaries/#{test_suite_id}/#{branch_name}/#{commit_sha}"
+        "https://cloud.rwx.com/captain/api/test_suite_summaries/#{test_suite_id}/#{branch_name}/#{commit_sha}"
       ).to_return(
         {
           status: 500
