@@ -25,7 +25,7 @@ inputs:
 
 runs:
   using: docker
-  image: Dockerfile
+  image: "docker://ghcr.io/detaso/rwx_results:v1"
   env:
     GITHUB_TOKEN: ${{ inputs.github-token }}
     RWX_ACCESS_TOKEN: ${{ inputs.rwx-access-token }}
