@@ -31,6 +31,10 @@ module RwxResults
     private
 
     delegate state: :context
-    delegate [:commit_sha, :repository] => :run_context
+    delegate commit_sha: :run_context
+
+    def repository
+      run_context.repo.to_s
+    end
   end
 end
