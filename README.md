@@ -10,7 +10,7 @@ RWX Results is a GitHub Action that reports on the Captain results for a Pull Re
 
 ## Get Started
 
-```
+```yaml
 name: Tests
 
 on:
