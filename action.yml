@@ -2,6 +2,10 @@ name: RWX Results
 author: ryansch
 description: A GitHub Action to show results from RWX Captain.
 
+branding:
+  icon: terminal
+  color: green
+
 inputs:
   github-token:
     description: The GitHub token used to create an authenticated client
