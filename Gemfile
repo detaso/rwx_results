@@ -5,7 +5,7 @@ source "https://rubygems.org"
 git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
 # Loads environment variables from `.env`.
-gem "dotenv", "~> 2.8.1"
+gem "dotenv", "~> 3.2"
 
 # A client library for making HTTP requests from Ruby.
 gem "httpx", "~> 1.0"
@@ -14,7 +14,7 @@ gem "httpx", "~> 1.0"
 gem "metaractor", "~> 3.3"
 
 # Simple wrapper for the GitHub API
-gem "octokit", "~> 7.1"
+gem "octokit", "~> 10.0"
 
 # octokit deps
 gem "faraday-multipart"
