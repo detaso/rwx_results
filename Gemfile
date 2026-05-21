@@ -11,7 +11,7 @@ gem "dotenv", "~> 3.2"
 gem "httpx", "~> 1.0"
 
 # Adds parameter validation and error control to interactor
-gem "metaractor", "~> 3.3"
+gem "metaractor", "~> 3.4", "> 3.4.0"
 
 # Simple wrapper for the GitHub API
 gem "octokit", "~> 10.0"

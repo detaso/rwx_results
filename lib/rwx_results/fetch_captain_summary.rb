@@ -4,7 +4,6 @@ module RwxResults
   class FetchCaptainSummary
     include Metaractor
     include State::Delegator
-    extend Forwardable
 
     required :state
     required :test_suite_id
@@ -46,8 +45,6 @@ module RwxResults
     end
 
     private
-
-    delegate state: :context
 
     def branch_name
       run_context.branch_name.tap do |branch_name|

@@ -37,6 +37,16 @@ jobs:
           echo "Action file contents:"
           cat action.yml
 
+          cd mark-outdated
+          yq '.runs.image = "docker://rwx_results:ci"' -i action.yml
+          echo "Action file contents:"
+          cat action.yml
+
+      - name: Run mark-outdated
+        uses: ./mark-outdated
+        if: ${{ !cancelled() }}
+        id: mark-outdated
+
       - name: Run action
         uses: ./ # Uses an action in the root directory
         if: ${{ !cancelled() }}

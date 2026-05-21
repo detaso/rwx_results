@@ -1,13 +1,13 @@
 require "rwx_results/state"
 require "rwx_results/fetch_captain_summary"
 require "rwx_results/generate_captain_markdown"
+require "rwx_results/fetch_existing_pull_request"
 require "rwx_results/manage_summary_comment"
 
 module RwxResults
   class Captain
     include Metaractor::Organizer
     include State::Delegator
-    extend Forwardable
 
     required :state
     required :test_suite_id
@@ -15,6 +15,7 @@ module RwxResults
     organize [
       FetchCaptainSummary,
       GenerateCaptainMarkdown,
+      FetchExistingPullRequest,
       ManageSummaryComment
     ]
 
@@ -23,9 +24,5 @@ module RwxResults
         super
       end
     end
-
-    private
-
-    delegate state: :context
   end
 end

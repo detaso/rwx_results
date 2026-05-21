@@ -1,5 +1,4 @@
 require "rwx_results/fetch_captain_summary"
-require "rwx_results/state"
 
 RSpec.describe RwxResults::FetchCaptainSummary do
   let(:run_context) do

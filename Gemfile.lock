@@ -59,9 +59,9 @@ GEM
       reline (>= 0.4.2)
     json (2.19.5)
     logger (1.7.0)
-    metaractor (3.3.5)
+    metaractor (3.4.1)
       i18n (~> 1.14)
-      interactor (~> 3.1)
+      interactor (~> 3.2)
       metaractor-sycamore (~> 0.4, >= 0.4.3)
       ostruct (~> 0.6)
     metaractor-sycamore (0.4.3)
@@ -134,7 +134,7 @@ DEPENDENCIES
   faraday-multipart
   faraday-retry
   httpx (~> 1.0)
-  metaractor (~> 3.3)
+  metaractor (~> 3.4, > 3.4.0)
   octokit (~> 10.0)
   rspec (~> 3.12)
   thor (~> 1.2)

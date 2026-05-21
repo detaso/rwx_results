@@ -7,6 +7,7 @@ require "webmock/rspec"
 WebMock.disable_net_connect!
 
 require "httpx/adapters/webmock"
+require "metaractor/spec"
 
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), "..", "lib")
 
@@ -103,4 +104,7 @@ RSpec.configure do |config|
   # test failures related to randomization by passing the same `--seed` value
   # as the one that triggered the failure.
   Kernel.srand config.seed
+
+  config.include Metaractor::Spec::Helpers
+  config.include Metaractor::Spec::Matchers
 end
