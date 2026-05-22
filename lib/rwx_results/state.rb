@@ -1,4 +1,5 @@
 require "rwx_results/run_context"
+require "rwx_results/constants"
 
 module RwxResults
   class State

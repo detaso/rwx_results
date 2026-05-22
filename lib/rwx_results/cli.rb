@@ -35,6 +35,17 @@ module RwxResults
       init
     end
 
+    desc "mark_outdated", "Mark an existing Results comment as outdated"
+    def mark_outdated
+      init
+
+      require "rwx_results/mark_outdated"
+
+      MarkOutdated.call!(
+        state:
+      )
+    end
+
     def self.exit_on_failure?
       true
     end

@@ -9,8 +9,13 @@ module RwxResults
     :owner,
     :repo
   ) do
-      def to_s
-        "#{owner}/#{repo}"
-      end
+    def to_s
+      "#{owner}/#{repo}"
+    end
   end
+
+  PullRequest = Data.define(
+    :pr,
+    :bot_comment
+  )
 end

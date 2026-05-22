@@ -4,56 +4,30 @@ module RwxResults
   class ManageSummaryComment
     include Metaractor
     include State::Delegator
-    extend Forwardable
 
     required :state
     required :captain_markdown
+    required :pull_request # type PullRequest
 
     def call
-      pulls =
-        octokit.commit_pulls(
+      if context.pull_request.bot_comment
+        logger.debug "Updating comment on #{repository}/pull/#{context.pull_request.pr.number}"
+        octokit.update_comment(
           repository,
-          commit_sha
+          context.pull_request.bot_comment.id,
+          context.captain_markdown
         )
-
-      logger.debug "Found #{pulls.size} pull requests"
-
-      pulls.each do |pull|
-        next unless pull.head.ref == run_context.branch_name
-
-        comments =
-          octokit.issue_comments(
-            repository,
-            pull.number
-          )
-
-        bot_comment =
-          comments.find do |comment|
-            comment.user.type == "Bot" && comment.body.include?("cloud.rwx.com")
-          end
-
-        if bot_comment
-          logger.debug "Updating comment on #{repository}/pull/#{pull.number}"
-          octokit.update_comment(
-            repository,
-            bot_comment.id,
-            context.captain_markdown
-          )
-        else
-          logger.debug "Adding comment to #{repository}/pull/#{pull.number}"
-          octokit.add_comment(
-            repository,
-            pull.number,
-            context.captain_markdown
-          )
-        end
+      else
+        logger.debug "Adding comment to #{repository}/pull/#{context.pull_request.pr.number}"
+        octokit.add_comment(
+          repository,
+          context.pull_request.pr.number,
+          context.captain_markdown
+        )
       end
     end
 
     private
-
-    delegate state: :context
-    delegate commit_sha: :run_context
 
     def repository
       run_context.repo.to_s

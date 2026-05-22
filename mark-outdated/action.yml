@@ -1,0 +1,17 @@
+name: "RWX Results: Mark Outdated"
+author: ryansch
+description: A GitHub Action to mark an existing Results comment as outdated
+
+inputs:
+  github-token:
+    description: The GitHub token used to create an authenticated client
+    default: ${{ github.token }}
+    required: false
+
+runs:
+  using: docker
+  image: "docker://ghcr.io/detaso/rwx_results:v1"
+  env:
+    GITHUB_TOKEN: ${{ inputs.github-token }}
+  args:
+    - mark_outdated

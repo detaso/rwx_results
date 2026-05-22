@@ -4,7 +4,6 @@ module RwxResults
   class GenerateCaptainMarkdown
     include Metaractor
     include State::Delegator
-    extend Forwardable
 
     required :state
     required :captain_summary
@@ -12,7 +11,9 @@ module RwxResults
     def call
       logger.info "Generating markdown..."
 
-      markdown = []
+      markdown = [
+        CAPTAIN_MARKER_START
+      ]
 
       status = context.captain_summary.dig(:summary, :status, :kind)
       if status == "failed"
@@ -74,7 +75,10 @@ module RwxResults
       end
 
       markdown << ""
-      markdown << "[Full results](#{context.captain_summary[:web_url]})"
+      markdown << "**[Full results](#{context.captain_summary[:web_url]})**"
+      markdown << ""
+      markdown << "*Commit: #{run_context.commit_sha[0, 8]}*"
+      markdown << CAPTAIN_MARKER_END
 
       context.captain_markdown =
         markdown.join("\n").tap do |text|
@@ -82,9 +86,5 @@ module RwxResults
           logger.info text
         end
     end
-
-    private
-
-    delegate state: :context
   end
 end
