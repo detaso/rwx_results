@@ -22,6 +22,14 @@ module RwxResults
       raise MultiplePullRequestError if pulls.size > 1
 
       pull = pulls.first
+      if pull.nil?
+        fail_with_error!(
+          errors: {
+            pull_request: :not_found
+          }
+        )
+      end
+
       comments =
         octokit.issue_comments(
           repository,

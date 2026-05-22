@@ -88,6 +88,19 @@ RSpec.describe RwxResults::FetchExistingPullRequest do
     end
   end
 
+  context "when no pull request is found" do
+    before do
+      allow(octokit).to receive(:commit_pulls).and_return([])
+    end
+
+    it "fails with a pull_request not_found error" do
+      action.run(state: state)
+
+      expect(result).to be_failure
+      expect(result.errors[:pull_request]).to include(:not_found)
+    end
+  end
+
   context "when multiple pull requests match" do
     let(:another_pull) do
       double("Pull", number: 43, head: double("Head", ref: "my-feature"))
