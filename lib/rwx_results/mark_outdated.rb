@@ -11,7 +11,13 @@ module RwxResults
 
     def call
       logger.start_group(title: "Mark Outdated") do
-        result = FetchExistingPullRequest.call!(context)
+        result = FetchExistingPullRequest.call(context)
+        if result.failure?
+          return if result.errors[:pull_request].include?(:not_found)
+
+          fail_from_context(context: result)
+          fail!
+        end
 
         pull_request = result.pull_request
 

@@ -51,14 +51,32 @@ RSpec.describe RwxResults::MarkOutdated do
   end
 
   before do
-    allow(RwxResults::FetchExistingPullRequest).to receive(:call!).and_return(fetch_result)
+    allow(RwxResults::FetchExistingPullRequest).to receive(:call).and_return(fetch_result)
+  end
+
+  context "when no pull request is found" do
+    let(:fetch_result) do
+      # TODO: Replace with context_creator after fixing upstream
+      Interactor::Context.build.tap do |ctx|
+        ctx.errors.add(errors: {pull_request: :not_found})
+        ctx.instance_variable_set(:@failure, true)
+      end
+    end
+
+    it "returns early without error" do
+      expect(RwxResults::ManageSummaryComment).not_to receive(:call!)
+
+      action.run(state: state)
+
+      expect(result).to be_success
+    end
   end
 
   context "when no bot comment exists" do
     let(:pull_request) { RwxResults::PullRequest.new(pr: pull, bot_comment: nil) }
 
     it "returns early without updating" do
-      expect(RwxResults::ManageSummaryComment).not_to receive(:call!)
+      expect(RwxResults::ManageSummaryComment).not_to receive(:call)
 
       action.run(state: state)
 
