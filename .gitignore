@@ -1,2 +1,7 @@
 .env
 spec/examples.txt
+
+# AI stuff
+docs/superpowers/
+.claude/worktrees/
+CLAUDE.local.md
