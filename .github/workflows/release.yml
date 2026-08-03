@@ -28,7 +28,6 @@ jobs:
       REGISTRY: ghcr.io
       IMAGE_NAME: detaso/rwx_results
       VERSION: ${{ inputs.version }}
-      DRY_RUN: ${{ inputs.dry_run }}
     steps:
       - name: Validate version and derive major
         run: |
@@ -75,16 +74,6 @@ jobs:
           done
           git --no-pager diff --stat
 
-      - name: Commit and push the release commit
-        if: ${{ inputs.dry_run == false }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add action.yml mark-outdated/action.yml
-          git commit -m "Release v${VERSION}"
-          git push origin main
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -96,6 +85,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Pushed before the release commit reaches main. main's action.yml must
+      # never name an image that does not exist, so a failed build has to abort
+      # the run while main is still untouched.
       - name: Build and push the immutable version image
         uses: docker/build-push-action@v7
         with:
@@ -107,6 +99,16 @@ jobs:
           platforms: linux/amd64
           provenance: false
           sbom: false
+
+      - name: Commit and push the release commit
+        if: ${{ inputs.dry_run == false }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add action.yml mark-outdated/action.yml
+          git commit -m "Release v${VERSION}"
+          git push origin main
 
       - name: Move the floating image tags
         if: ${{ inputs.dry_run == false }}
@@ -135,11 +137,25 @@ jobs:
           set -euo pipefail
 
           # A missing draft is normal: the first release has none, and neither
-          # does a release cut right after another. Never pass --cleanup-tag.
-          if gh release view next --json isDraft --jq '.isDraft' 2>/dev/null | grep -q true; then
-            gh release delete next --yes
+          # does a release cut right after another. Capture stdout and stderr
+          # separately so a genuine "not found" can be told apart from an
+          # auth/rate-limit/network failure. Swallowing stderr would make a
+          # transient error look like absence, skip the delete, and leave the
+          # stale next draft sitting beside the release just published.
+          view_stderr="$(mktemp)"
+
+          if is_draft="$(gh release view next --json isDraft --jq '.isDraft' 2>"${view_stderr}")"; then
+            if [ "${is_draft}" = "true" ]; then
+              # Draft releases carry no git tag, so deleting one touches nothing.
+              # Never pass --cleanup-tag here.
+              gh release delete next --yes
+            fi
+          elif grep -qi 'release not found' "${view_stderr}"; then
+            echo "No release named next; nothing to remove."
           else
-            echo "no 'next' draft to remove"
+            echo "gh release view next failed for a reason other than not-found:" >&2
+            cat "${view_stderr}" >&2
+            exit 1
           fi
 
           gh release create "v${VERSION}" \
