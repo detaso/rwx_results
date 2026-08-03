@@ -46,7 +46,7 @@ Pick a ref based on how much churn you want:
 | --- | --- |
 | `@v1` | Latest release in the 1.x line. Recommended. |
 | `@v1.2.0` | Exactly that release, immutably. |
-| `@main` | The most recent release, since `main` pins it after each release. |
+| `@main` | The most recent release once one has been cut, since `main` pins it after each release. |
 
 Each release publishes an immutable `ghcr.io/detaso/rwx_results:X.Y.Z` image
 and moves `:v1` to match. Because the action metadata records the exact image
