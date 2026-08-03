@@ -7,8 +7,13 @@ name: Release
 # this state -- the image and the vX.Y.Z tag are already correct -- so finish by
 # hand, from a checkout of the release commit:
 #
-#   git push -f origin vX          # only if moving the major tag was what failed
+#   git tag -f vX && git push -f origin vX   # only if moving the major tag failed
 #   gh release create vX.Y.Z --verify-tag --generate-notes --title vX.Y.Z
+#
+# The `git tag -f` is required, not optional: this workflow moves vX on the runner,
+# and that local tag is gone by the time you recover. In a fresh checkout vX still
+# points at the PREVIOUS release, so pushing it without re-tagging would move
+# origin's vX backwards.
 #
 # Run whichever of the two did not complete. Skipping straight to a new patch
 # version is also fine; there is nothing to unwind.
