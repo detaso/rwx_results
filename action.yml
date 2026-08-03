@@ -1,11 +1,9 @@
 name: RWX Results
 author: ryansch
 description: A GitHub Action to show results from RWX Captain.
-
 branding:
   icon: terminal
   color: green
-
 inputs:
   github-token:
     description: The GitHub token used to create an authenticated client
@@ -26,7 +24,6 @@ inputs:
   captain-repository:
     description: The github repository to target. Defaults to the pushed repository.
     required: false
-
 runs:
   using: docker
   image: "docker://ghcr.io/detaso/rwx_results:v1"

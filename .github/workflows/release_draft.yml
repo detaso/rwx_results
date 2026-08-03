@@ -1,0 +1,59 @@
+name: Release Draft
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+# Let the in-progress run finish instead of cancelling it, so its
+# delete-then-create sequence always completes and there is never a moment with
+# no `next` draft. With cancel-in-progress: true a run could be killed between
+# the delete and the create, leaving no draft until someone merged again.
+# GitHub still keeps only one pending run per group, so a rapid intermediate
+# merge's run is dropped before it starts -- harmless, because notes are
+# generated server-side from --target "${GITHUB_SHA}" and the surviving pending
+# run targets a newer commit.
+concurrency:
+  group: release-draft
+  cancel-in-progress: false
+
+jobs:
+  update_draft:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Recreate draft release with generated notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Capture stdout and stderr separately so a genuine "not found" can be
+          # told apart from an auth/rate-limit/network failure. Swallowing stderr
+          # would make a transient error look like absence, skip the delete, and
+          # leave a second draft named next behind.
+          view_stderr="$(mktemp)"
+
+          if is_draft="$(gh release view next --json isDraft --jq '.isDraft' 2>"${view_stderr}")"; then
+            if [ "${is_draft}" = "true" ]; then
+              # Draft releases carry no git tag, so deleting one touches nothing.
+              # Never pass --cleanup-tag here.
+              gh release delete next --yes
+            fi
+          elif grep -qi 'release not found' "${view_stderr}"; then
+            echo "No release named next yet; creating the first draft."
+          else
+            echo "gh release view next failed for a reason other than not-found:" >&2
+            cat "${view_stderr}" >&2
+            exit 1
+          fi
+
+          gh release create next \
+            --draft \
+            --generate-notes \
+            --target "${GITHUB_SHA}" \
+            --title "Unreleased"

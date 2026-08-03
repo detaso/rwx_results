@@ -1,23 +1,78 @@
 name: Release
 
+# Recovery runbook: a failure AFTER the git tags were pushed cannot be fixed by
+# re-running this workflow. The duplicate-release check refuses any version whose
+# vX.Y.Z tag already exists, and allow_image_overwrite bypasses only the registry
+# half of that check, never the tag half. Nothing is consumer-visibly broken in
+# this state -- the image and the vX.Y.Z tag are already correct -- so finish by
+# hand, from a checkout of the release commit:
+#
+#   git tag -f vX && git push -f origin vX   # only if moving the major tag failed
+#   gh release create vX.Y.Z --verify-tag --generate-notes --title vX.Y.Z
+#
+# The `git tag -f` is required, not optional: this workflow moves vX on the runner,
+# and that local tag is gone by the time you recover. In a fresh checkout vX still
+# points at the PREVIOUS release, so pushing it without re-tagging would move
+# origin's vX backwards.
+#
+# Run whichever of the two did not complete. Skipping straight to a new patch
+# version is also fine; there is nothing to unwind.
+
 on:
   workflow_dispatch:
-  pull_request_target:
-    types: [closed]
-    branches: [main]
+    inputs:
+      version:
+        description: "Version to release, without a leading v (e.g. 1.2.0)"
+        required: true
+        type: string
+      dry_run:
+        description: "Build and verify without pushing anything"
+        required: false
+        default: false
+        type: boolean
+      allow_image_overwrite:
+        description: "DANGEROUS: overwrite an already-published :X.Y.Z image. Only for recovering an orphaned image from a failed release."
+        required: false
+        default: false
+        type: boolean
 
 permissions:
-  contents: read
+  contents: write
+  packages: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  create_action_images:
+  release:
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: detaso/rwx_results
+      VERSION: ${{ inputs.version }}
     steps:
+      - name: Validate version and derive major
+        run: |
+          set -euo pipefail
+          if ! [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must be X.Y.Z with no leading v (got '${VERSION}')"
+            exit 1
+          fi
+          echo "MAJOR=${VERSION%%.*}" >> "${GITHUB_ENV}"
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      # Buildx and login run ahead of the duplicate-release check because that
+      # check queries the registry, and it has to do so authenticated: for a
+      # private package an unauthenticated probe can answer "not found", which
+      # would read as "not released" and defeat the guard. Neither step is
+      # dry-run guarded -- setup and login touch only the runner's own state, so
+      # a dry run exercises the same path a real release takes.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -28,18 +83,154 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout
-        uses: actions/checkout@v6
+      - name: Refuse to overwrite an existing release
+        env:
+          ALLOW_IMAGE_OVERWRITE: ${{ fromJSON(inputs.allow_image_overwrite) }}
+        run: |
+          set -euo pipefail
 
-      - name: Build and Push Container Image
+          if git rev-parse -q --verify "refs/tags/v${VERSION}" >/dev/null; then
+            echo "::error::tag v${VERSION} already exists; immutable releases are never overwritten"
+            exit 1
+          fi
+
+          # The git tag alone is not proof. A previous run can push the image and
+          # then lose the `git push origin main` race to a concurrent merge,
+          # leaving the image published with no tag behind it. Rebuilding is not
+          # reproducible -- the Dockerfile installs gems and apt packages from
+          # the network, and a re-run checks out whatever merged in the meantime
+          # -- so pushing :${VERSION} a second time would replace released
+          # content with a different digest. Check the registry too.
+          IMAGE="${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          inspect_stderr="$(mktemp)"
+
+          if docker buildx imagetools inspect "${IMAGE}" >/dev/null 2>"${inspect_stderr}"; then
+            if [ "${ALLOW_IMAGE_OVERWRITE}" = "true" ]; then
+              echo "::warning::${IMAGE} is already published and allow_image_overwrite is set; overwriting it with a freshly built image of a different digest"
+            else
+              echo "::error::${IMAGE} is already published; version images are immutable. If a previous release orphaned it, re-run with allow_image_overwrite enabled."
+              exit 1
+            fi
+          elif grep -qiE 'not found|manifest unknown|no such manifest' "${inspect_stderr}"; then
+            echo "${IMAGE} is not published yet"
+          else
+            # Same rule as the release-notes step: never let an outage read as
+            # absence. A registry that cannot answer is not a registry saying no.
+            echo "docker buildx imagetools inspect failed for a reason other than not-found:" >&2
+            cat "${inspect_stderr}" >&2
+            exit 1
+          fi
+
+      - name: Bump image reference in both action files
+        run: |
+          set -euo pipefail
+          IMAGE_REF="docker://${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          for f in action.yml mark-outdated/action.yml; do
+            yq ".runs.image = \"${IMAGE_REF}\"" -i "$f"
+          done
+
+      - name: Assert both files were rewritten
+        run: |
+          set -euo pipefail
+          EXPECTED="docker://${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          for f in action.yml mark-outdated/action.yml; do
+            ACTUAL=$(yq -r '.runs.image' "$f")
+            if [ "${ACTUAL}" != "${EXPECTED}" ]; then
+              echo "::error::${f} reads '${ACTUAL}', expected '${EXPECTED}'"
+              exit 1
+            fi
+            echo "${f}: ${ACTUAL}"
+          done
+          git --no-pager diff --stat
+
+      # Pushed before the release commit reaches main. main's action.yml must
+      # never name an image that does not exist, so a failed build has to abort
+      # the run while main is still untouched.
+      - name: Build and push the immutable version image
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          push: ${{ !fromJSON(inputs.dry_run) }}
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v1
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           platforms: linux/amd64
           provenance: false
           sbom: false
+
+      - name: Commit and push the release commit
+        if: ${{ !fromJSON(inputs.dry_run) }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add action.yml mark-outdated/action.yml
+          # Idempotent so a retry after a later step failed can get past here.
+          # On a re-run the bump is a no-op, and a bare `git commit` would exit 1
+          # with "nothing to commit", killing the job under errexit before the
+          # tags and release it was re-run to create. The push must still happen
+          # in that case, so it stays outside the branch.
+          if git diff --cached --quiet; then
+            echo "action files already pin v${VERSION}; nothing to commit"
+          else
+            git commit -m "Release v${VERSION}"
+          fi
+          git push origin main
+
+      - name: Move the floating image tags
+        if: ${{ !fromJSON(inputs.dry_run) }}
+        run: |
+          set -euo pipefail
+          SRC="${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          docker buildx imagetools create \
+            --tag "${REGISTRY}/${IMAGE_NAME}:v${MAJOR}" \
+            --tag "${REGISTRY}/${IMAGE_NAME}:latest" \
+            "${SRC}"
+
+      - name: Create and push git tags
+        if: ${{ !fromJSON(inputs.dry_run) }}
+        run: |
+          set -euo pipefail
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+          git tag -f "v${MAJOR}"
+          git push -f origin "v${MAJOR}"
+
+      - name: Publish the release notes
+        if: ${{ !fromJSON(inputs.dry_run) }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # A missing draft is normal: the first release has none, and neither
+          # does a release cut right after another. Capture stdout and stderr
+          # separately so a genuine "not found" can be told apart from an
+          # auth/rate-limit/network failure. Swallowing stderr would make a
+          # transient error look like absence, skip the delete, and leave the
+          # stale next draft sitting beside the release just published.
+          view_stderr="$(mktemp)"
+
+          if is_draft="$(gh release view next --json isDraft --jq '.isDraft' 2>"${view_stderr}")"; then
+            if [ "${is_draft}" = "true" ]; then
+              # Draft releases carry no git tag, so deleting one touches nothing.
+              # Never pass --cleanup-tag here.
+              gh release delete next --yes
+            fi
+          elif grep -qi 'release not found' "${view_stderr}"; then
+            echo "No release named next; nothing to remove."
+          else
+            echo "gh release view next failed for a reason other than not-found:" >&2
+            cat "${view_stderr}" >&2
+            exit 1
+          fi
+
+          gh release create "v${VERSION}" \
+            --verify-tag \
+            --generate-notes \
+            --title "v${VERSION}"
+
+      - name: Dry run summary
+        if: ${{ fromJSON(inputs.dry_run) }}
+        run: |
+          echo "::notice::dry run complete for v${VERSION} — nothing was committed, tagged, or pushed"
