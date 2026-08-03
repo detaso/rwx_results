@@ -1,0 +1,37 @@
+name: Release Draft
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-draft
+  cancel-in-progress: true
+
+jobs:
+  update_draft:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Recreate draft release with generated notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Draft releases carry no git tag, so deleting one touches nothing.
+          # Never pass --cleanup-tag here.
+          if gh release view next --json isDraft --jq '.isDraft' 2>/dev/null | grep -q true; then
+            gh release delete next --yes
+          fi
+
+          gh release create next \
+            --draft \
+            --generate-notes \
+            --target "${GITHUB_SHA}" \
+            --title "Unreleased"
