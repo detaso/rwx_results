@@ -7,6 +7,10 @@ require "webmock/rspec"
 WebMock.disable_net_connect!
 
 require "httpx/adapters/webmock"
+
+# `Metaractor::Spec::Helpers#context_creator` calls `present?` on its arguments,
+# which is an ActiveSupport core extension rather than plain Ruby.
+require "active_support/core_ext/object/blank"
 require "metaractor/spec"
 
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), "..", "lib")

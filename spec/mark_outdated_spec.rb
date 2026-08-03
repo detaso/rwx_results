@@ -1,5 +1,6 @@
 require "rwx_results/mark_outdated"
 require "rwx_results/captain"
+require "rwx_results/logger"
 require "rwx_results/state"
 require "rwx_results/types"
 
@@ -8,14 +9,25 @@ RSpec.describe RwxResults::MarkOutdated do
     FactoryBot.build(:run_context, branch_name: "my-feature", commit_sha: "abc123")
   end
 
+  let(:logger) { instance_double(RwxResults::Logger) }
+
   let(:state) do
     RwxResults::State.new.tap do |s|
       allow(s).to receive(:run_context) { run_context }
       allow(s).to receive(:octokit) { octokit }
+      allow(s).to receive(:logger) { logger }
     end
   end
 
   let(:octokit) { instance_double(Octokit::Client) }
+
+  before do
+    allow(logger).to receive(:start_group).and_yield
+    allow(logger).to receive(:debug)
+    allow(logger).to receive(:info)
+    allow(logger).to receive(:notice)
+    allow(logger).to receive(:warning)
+  end
 
   around do |example|
     original = ENV["GITHUB_REPOSITORY"]
@@ -56,11 +68,7 @@ RSpec.describe RwxResults::MarkOutdated do
 
   context "when no pull request is found" do
     let(:fetch_result) do
-      # TODO: Replace with context_creator after fixing upstream
-      Interactor::Context.build.tap do |ctx|
-        ctx.errors.add(errors: {pull_request: :not_found})
-        ctx.instance_variable_set(:@failure, true)
-      end
+      context_creator(errors: {pull_request: :not_found})
     end
 
     it "returns early without error" do
@@ -69,6 +77,44 @@ RSpec.describe RwxResults::MarkOutdated do
       action.run(state: state)
 
       expect(result).to be_success
+    end
+
+    it "emits a notice, never a warning, even on a feature branch" do
+      expect(logger).to receive(:notice).with(
+        properties: {title: "No pull request found"},
+        message: a_string_including("my-feature")
+      )
+      expect(logger).not_to receive(:warning)
+
+      action.run(state: state)
+    end
+  end
+
+  context "when no pull request is found and the lookup is not stubbed" do
+    before do
+      allow(RwxResults::FetchExistingPullRequest).to receive(:call).and_call_original
+      allow(octokit).to receive(:commit_pulls).and_return([])
+    end
+
+    it "leaves the context successful" do
+      action.run(state: state)
+
+      expect(result).to be_success
+      # NOTE: `errors[:pull_request]` would emit a Sycamore::Absence warning
+      expect(result.errors).to be_empty
+    end
+  end
+
+  context "when the pull request lookup fails for another reason" do
+    let(:fetch_result) do
+      context_creator(errors: {state: :required})
+    end
+
+    it "fails and propagates the original error" do
+      action.run(state: state)
+
+      expect(result).to be_failure
+      expect(result.errors[:state]).to include(:required)
     end
   end
 

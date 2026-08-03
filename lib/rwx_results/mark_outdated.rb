@@ -1,4 +1,5 @@
 require "rwx_results/state"
+require "rwx_results/missing_pull_request"
 require "rwx_results/fetch_existing_pull_request"
 require "rwx_results/manage_summary_comment"
 
@@ -6,17 +7,25 @@ module RwxResults
   class MarkOutdated
     include Metaractor
     include State::Delegator
+    include MissingPullRequest
 
     required :state
 
     def call
       logger.start_group(title: "Mark Outdated") do
-        result = FetchExistingPullRequest.call(context)
-        if result.failure?
-          return if result.errors[:pull_request].include?(:not_found)
+        result = FetchExistingPullRequest.call(state:)
 
-          fail_from_context(context: result)
-          fail!
+        if result.failure?
+          if missing_pull_request?(result)
+            report_missing_pull_request(
+              skipping: "the outdated marker",
+              allow_warning: false
+            )
+            return
+          end
+
+          context.fail_from_context(context: result)
+          context.fail!
         end
 
         pull_request = result.pull_request

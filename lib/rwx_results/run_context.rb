@@ -98,5 +98,15 @@ module RwxResults
           sha
         end
       end
+
+      def default_branch
+        payload.dig(:repository, :default_branch)
+      end
+
+      def pull_request_expected?
+        return true if default_branch.nil?
+
+        branch_name != default_branch
+      end
     end
 end
