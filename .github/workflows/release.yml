@@ -1,5 +1,18 @@
 name: Release
 
+# Recovery runbook: a failure AFTER the git tags were pushed cannot be fixed by
+# re-running this workflow. The duplicate-release check refuses any version whose
+# vX.Y.Z tag already exists, and allow_image_overwrite bypasses only the registry
+# half of that check, never the tag half. Nothing is consumer-visibly broken in
+# this state -- the image and the vX.Y.Z tag are already correct -- so finish by
+# hand, from a checkout of the release commit:
+#
+#   git push -f origin vX          # only if moving the major tag was what failed
+#   gh release create vX.Y.Z --verify-tag --generate-notes --title vX.Y.Z
+#
+# Run whichever of the two did not complete. Skipping straight to a new patch
+# version is also fine; there is nothing to unwind.
+
 on:
   workflow_dispatch:
     inputs:
