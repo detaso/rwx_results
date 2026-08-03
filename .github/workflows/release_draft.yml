@@ -7,9 +7,15 @@ on:
 permissions:
   contents: write
 
+# Queue rapid merges instead of cancelling them. Each run completes its own
+# delete-then-create against its own checkout, and the last to finish leaves the
+# correct notes. With cancel-in-progress: true an intermediate run could be
+# killed between the delete and the create, leaving no `next` draft until
+# someone merged again. Both converge eventually; only this one has no window
+# where the draft is missing.
 concurrency:
   group: release-draft
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   update_draft:
