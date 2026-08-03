@@ -37,3 +37,20 @@ jobs:
           rwx-access-token: ${{ secrets.RWX_ACCESS_TOKEN }}
           captain-test-suite-id: tests
 ```
+
+## Versioning
+
+Pick a ref based on how much churn you want:
+
+| Ref | Resolves to |
+| --- | --- |
+| `@v1` | Latest release in the 1.x line. Recommended. |
+| `@v1.2.0` | Exactly that release, immutably. |
+| `@main` | The most recent release, since `main` pins it after each release. |
+
+Each release publishes an immutable `ghcr.io/detaso/rwx_results:X.Y.Z` image
+and moves `:v1` to match. Because the action metadata records the exact image
+tag, `@v1.2.0` runs 1.2.0's code and nothing else.
+
+Releases are cut by running the **Release** workflow with a version like
+`1.2.0`. Use its `dry_run` option to rehearse without publishing.
