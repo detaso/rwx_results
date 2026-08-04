@@ -71,7 +71,7 @@ module RwxResults
     end
 
     def http
-      HTTPX.plugin(:retries)
+      HTTPX.plugin(:retries, retry_jitter: ->(interval) { interval })
     end
   end
 end
