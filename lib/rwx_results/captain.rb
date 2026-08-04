@@ -1,7 +1,9 @@
 require "rwx_results/state"
 require "rwx_results/missing_pull_request"
+require "rwx_results/captain_summary_unavailable"
 require "rwx_results/fetch_captain_summary"
 require "rwx_results/generate_captain_markdown"
+require "rwx_results/generate_summary_unavailable_markdown"
 require "rwx_results/fetch_existing_pull_request"
 require "rwx_results/manage_summary_comment"
 
@@ -10,14 +12,27 @@ module RwxResults
     include Metaractor
     include State::Delegator
     include MissingPullRequest
+    include CaptainSummaryUnavailable
 
     required :state
     required :test_suite_id
 
     def call
       logger.start_group(title: "Captain Results") do
-        FetchCaptainSummary.call!(context)
-        GenerateCaptainMarkdown.call!(context)
+        summary = FetchCaptainSummary.call(state:, test_suite_id:)
+
+        if summary.failure?
+          unless summary_unavailable?(summary)
+            context.fail_from_context(context: summary)
+            context.fail!
+          end
+
+          report_summary_unavailable
+          GenerateSummaryUnavailableMarkdown.call!(context)
+        else
+          context.captain_summary = summary.captain_summary
+          GenerateCaptainMarkdown.call!(context)
+        end
 
         result = FetchExistingPullRequest.call(state:)
 
