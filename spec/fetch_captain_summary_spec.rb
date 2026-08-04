@@ -117,4 +117,42 @@ RSpec.describe RwxResults::FetchCaptainSummary do
       expect(result.captain_summary).to eq response
     end
   end
+
+  context "when captain never returns a summary" do
+    before do
+      # Disable the normal delay between retries
+      allow(action).to receive(:retry_after) { 0.0001 }
+
+      stub_request(
+        :get,
+        "https://cloud.rwx.com/captain/api/test_suite_summaries/#{test_suite_id}/#{branch_name}/#{commit_sha}"
+      ).to_return(status: 204)
+    end
+
+    it "fails with a not_available error instead of raising" do
+      expect {
+        action.run(state: state, test_suite_id: test_suite_id)
+      }.not_to raise_error
+
+      expect(result).to be_failure
+      expect(result.errors.include?(captain_summary: :not_available)).to be true
+    end
+
+    it "exhausts the retry budget before giving up" do
+      action.run(state: state, test_suite_id: test_suite_id)
+
+      expect(
+        a_request(
+          :get,
+          "https://cloud.rwx.com/captain/api/test_suite_summaries/#{test_suite_id}/#{branch_name}/#{commit_sha}"
+        )
+      ).to have_been_made.times(11)
+    end
+  end
+
+  describe "#retry_after" do
+    it "waits 9 seconds, giving a ~90s ceiling across 10 retries" do
+      expect(described_class.new.send(:retry_after)).to eq 9
+    end
+  end
 end

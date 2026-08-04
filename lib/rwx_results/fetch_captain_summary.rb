@@ -34,7 +34,9 @@ module RwxResults
       response.raise_for_status
 
       if response.status == 204
-        raise "Captain results not found for test_suite_id: #{context.test_suite_id}, branch: #{branch_name}, summary_sha: #{summary_sha}"
+        logger.debug "No captain summary for #{context.test_suite_id}/#{branch_name}/#{summary_sha}"
+
+        fail_with_error!(errors: {captain_summary: :not_available})
       end
 
       logger.debug "Response body: #{response.body}"
@@ -65,7 +67,7 @@ module RwxResults
     end
 
     def retry_after
-      5
+      9
     end
 
     def http
