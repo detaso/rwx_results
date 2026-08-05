@@ -52,8 +52,38 @@ jobs:
             exit 1
           fi
 
+          # Generate the notes ourselves rather than with --generate-notes, so we
+          # control two things gh cannot express for a draft:
+          #
+          # 1. previous_tag_name. Left to infer, GitHub picked v1.1.0 rather than
+          #    v1.2.0, so every PR already shipped in v1.2.0 reappeared in the
+          #    draft. releases/latest is the right baseline: it excludes drafts.
+          # 2. tag_name. The generated "Full Changelog" footer always compares
+          #    against the release's own tag, and a draft has no tag -- so a
+          #    tag_name of "next" produced a 404 link. Passing the target sha
+          #    instead makes GitHub write a link that resolves.
+          #
+          # The release itself is still created under the stable name "next", so
+          # the lookup above keeps working; only the generated text differs.
+          previous_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name' 2>/dev/null || true)"
+
+          if [ -n "${previous_tag}" ]; then
+            echo "Generating notes since ${previous_tag}"
+            notes="$(gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+              -X POST \
+              -f tag_name="${GITHUB_SHA}" \
+              -f previous_tag_name="${previous_tag}" \
+              --jq '.body')"
+          else
+            echo "No published release yet; letting GitHub choose the baseline"
+            notes="$(gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+              -X POST \
+              -f tag_name="${GITHUB_SHA}" \
+              --jq '.body')"
+          fi
+
           gh release create next \
             --draft \
-            --generate-notes \
             --target "${GITHUB_SHA}" \
-            --title "Unreleased"
+            --title "Unreleased" \
+            --notes "${notes}"
