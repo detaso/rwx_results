@@ -65,21 +65,31 @@ jobs:
           #
           # The release itself is still created under the stable name "next", so
           # the lookup above keeps working; only the generated text differs.
-          previous_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name' 2>/dev/null || true)"
+          # Discriminate a real 404 from an API failure, for the same reason as
+          # the block above: falling back on a transient error would let GitHub
+          # infer the baseline, and inference is exactly what produced the
+          # already-shipped-PR bug. `gh api` exits 1 for both, so only stderr
+          # tells them apart -- "Not Found (HTTP 404)" here, where the release
+          # subcommand above says "release not found".
+          latest_stderr="$(mktemp)"
 
-          if [ -n "${previous_tag}" ]; then
+          if previous_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name' 2>"${latest_stderr}")"; then
             echo "Generating notes since ${previous_tag}"
             notes="$(gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
               -X POST \
               -f tag_name="${GITHUB_SHA}" \
               -f previous_tag_name="${previous_tag}" \
               --jq '.body')"
-          else
+          elif grep -q 'HTTP 404' "${latest_stderr}"; then
             echo "No published release yet; letting GitHub choose the baseline"
             notes="$(gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
               -X POST \
               -f tag_name="${GITHUB_SHA}" \
               --jq '.body')"
+          else
+            echo "gh api releases/latest failed for a reason other than not-found:" >&2
+            cat "${latest_stderr}" >&2
+            exit 1
           fi
 
           gh release create next \
