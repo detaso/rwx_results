@@ -42,16 +42,18 @@ RSpec.describe RwxResults::Captain do
     allow(logger).to receive(:notice)
     allow(logger).to receive(:warning)
 
-    allow(RwxResults::FetchCaptainSummary).to receive(:call!) do |ctx|
-      ctx.captain_summary = {
-        summary: {
-          status: {kind: "successful"},
-          flaky: 0, retries: 0, failed: 0, timedOut: 0,
-          quarantined: 0, pended: 0, skipped: 0, todo: 0,
-          canceled: 0, successful: 10
-        },
-        web_url: "https://cloud.rwx.com/captain/test_suite/branch/sha"
-      }
+    allow(RwxResults::FetchCaptainSummary).to receive(:call) do
+      context_creator(
+        captain_summary: {
+          summary: {
+            status: {kind: "successful"},
+            flaky: 0, retries: 0, failed: 0, timedOut: 0,
+            quarantined: 0, pended: 0, skipped: 0, todo: 0,
+            canceled: 0, successful: 10
+          },
+          web_url: "https://cloud.rwx.com/captain/test_suite/branch/sha"
+        }
+      )
     end
 
     allow(RwxResults::GenerateCaptainMarkdown).to receive(:call!) do |ctx|
@@ -106,10 +108,67 @@ RSpec.describe RwxResults::Captain do
     end
   end
 
-  context "when fetching the Captain summary fails" do
+  context "when the Captain summary is unavailable" do
+    let(:pull) do
+      double("Pull", number: 42, head: double("Head", ref: "my-feature"))
+    end
+
     before do
-      allow(RwxResults::FetchCaptainSummary).to receive(:call!) do |ctx|
-        ctx.fail_with_error!(errors: {captain_summary: :unavailable})
+      allow(RwxResults::FetchCaptainSummary).to receive(:call) do
+        context_creator(errors: {captain_summary: :not_available})
+      end
+
+      allow(RwxResults::GenerateSummaryUnavailableMarkdown).to receive(:call!) do |ctx|
+        ctx.captain_markdown = "### :hourglass_flowing_sand: Results unavailable"
+      end
+
+      allow(octokit).to receive(:commit_pulls).and_return([pull])
+      allow(octokit).to receive(:issue_comments).and_return([])
+      allow(octokit).to receive(:add_comment)
+    end
+
+    it "posts the unavailable comment and succeeds" do
+      expect(RwxResults::GenerateCaptainMarkdown).not_to receive(:call!)
+      expect(RwxResults::ManageSummaryComment).to receive(:call!) do |args|
+        expect(args[:captain_markdown]).to eq(
+          "### :hourglass_flowing_sand: Results unavailable"
+        )
+      end
+
+      result = described_class.call(state: state, test_suite_id: test_suite_id)
+
+      expect(result).to be_success
+      expect(result.errors).to be_empty
+    end
+
+    it "emits a warning annotation" do
+      expect(logger).to receive(:warning).with(
+        properties: {title: "Captain summary unavailable"},
+        message: a_string_including("suite-123").and(a_string_including("my-feature"))
+      )
+
+      described_class.call(state: state, test_suite_id: test_suite_id)
+    end
+
+    context "and no pull request is found" do
+      before do
+        allow(octokit).to receive(:commit_pulls).and_return([])
+      end
+
+      it "skips the comment but still succeeds" do
+        expect(RwxResults::ManageSummaryComment).not_to receive(:call!)
+
+        result = described_class.call(state: state, test_suite_id: test_suite_id)
+
+        expect(result).to be_success
+      end
+    end
+  end
+
+  context "when fetching the Captain summary fails for another reason" do
+    before do
+      allow(RwxResults::FetchCaptainSummary).to receive(:call) do
+        context_creator(errors: {captain_summary: :boom})
       end
     end
 
@@ -117,7 +176,14 @@ RSpec.describe RwxResults::Captain do
       result = described_class.call(state: state, test_suite_id: test_suite_id)
 
       expect(result).to be_failure
-      expect(result.errors[:captain_summary]).to include(:unavailable)
+      expect(result.errors[:captain_summary]).to include(:boom)
+    end
+
+    it "does not report an unavailable summary" do
+      expect(logger).not_to receive(:warning)
+      expect(RwxResults::GenerateSummaryUnavailableMarkdown).not_to receive(:call!)
+
+      described_class.call(state: state, test_suite_id: test_suite_id)
     end
   end
 

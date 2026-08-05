@@ -151,6 +151,30 @@ RSpec.describe RwxResults::MarkOutdated do
     end
   end
 
+  context "when the bot comment says results are unavailable" do
+    let(:bot_comment_body) do
+      [
+        RwxResults::CAPTAIN_MARKER_START,
+        "### :hourglass_flowing_sand: Results unavailable",
+        "",
+        "*Commit: abc123de*",
+        RwxResults::CAPTAIN_MARKER_END
+      ].join("\n")
+    end
+
+    it "appends (Outdated) to the unavailable header" do
+      expect(RwxResults::ManageSummaryComment).to receive(:call!) do |args|
+        expect(args[:captain_markdown]).to include(
+          "### :hourglass_flowing_sand: Results unavailable (Outdated)"
+        )
+      end
+
+      action.run(state: state)
+
+      expect(result).to be_success
+    end
+  end
+
   context "when the bot comment exists and is not outdated" do
     it "appends (Outdated) to the header and updates the comment" do
       expect(RwxResults::ManageSummaryComment).to receive(:call!) do |args|
